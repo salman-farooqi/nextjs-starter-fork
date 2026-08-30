@@ -1,325 +1,137 @@
 # Architecture
 
-This document explains the architectural decisions behind this Next.js starter
-template. It's meant for maintainers who want to understand *why* things are set
-up this way — not just *what* is configured.
+The starter uses a layered Next.js application. Keep the layers until a real
+project proves that a different boundary is simpler.
 
-Every choice here is deliberate. If you're thinking of changing something, read
-the rationale first.
+## Dependency direction
 
----
-
-## Stack
-
-| Layer | Choice | Why |
-|-------|--------|-----|
-| **Framework** | Next.js 16 (App Router) | Full-stack React with server components, streaming, and file-based routing out of the box |
-| **Language** | TypeScript (strict) | Non-negotiable. Catches entire categories of bugs at compile time |
-| **Styling** | Tailwind CSS v4 | Utility-first with JIT compilation; no dead CSS, no context switching |
-| **UI Components** | shadcn/ui (New York style) | Copy-paste, fully-owned components. No dependency black box, no version lock-in |
-| **ORM** | Drizzle ORM | Type-safe SQL with a thin layer over Postgres. No query builder magic — you write real SQL semantics |
-| **Error Tracking** | Sentry | Industry standard for observability; configured with source maps and environment contexts |
-| **Linting / Formatting** | Biome | Unified tool — no more ESLint + Prettier plugin soup. Single binary, single config, 10x faster |
-| **Git Hooks** | Husky | Enforces lint and format checks before code reaches CI |
-
----
-
-## Architectural Decisions
-
-### Full-Stack Next.js (No Separate Backend)
-
-There is no Express server, no Fastify API, no separate backend repository. The
-template uses Next.js as a full-stack framework. This is not a compromise — it's
-a deliberate choice backed by the App Router's capabilities.
-
-API Routes handle cacheable GET requests (data fetching for client components,
-external API proxies). Server Actions handle mutations (form submissions, auth,
-data writes). Together they replace what a separate backend would do, without
-the operational overhead of maintaining two deployments, two CI pipelines, and a
-contract layer between them.
-
-**When to break this rule:** If you need long-running background workers,
-WebSocket servers, or a public API consumed by third parties, extract those into
-separate services. Everything else stays in Next.js.
-
-### Atomic Design for Components
-
-Components live under `src/components/app/` and follow atomic design:
-
-- **atoms/** — The smallest building blocks: buttons, inputs, labels, badges.
-  These are generic and project-agnostic.
-- **molecules/** — Composites of atoms: form fields, search bars, cards. These
-  combine atoms into small meaningful units.
-- **compounds/** — Feature-specific components: signup forms, data tables,
-  navigation menus. These are the largest units and often compose molecules.
-
-`src/components/ui/` is reserved for shadcn/ui base components, which are
-treated as a vendor directory (excluded from linting, rarely modified).
-
-This structure scales. Small projects use only atoms and a few compounds. Large
-projects with multiple feature domains group compounds by domain
-(`compounds/auth/`, `compounds/dashboard/`). The hierarchy prevents
-component sprawl without enforcing rigid folder-per-component overhead.
-
-### Data Flow: DB → DAL → Services → Actions / API
-
-Data moves through four strict layers:
-
-```
-Database (Postgres)
-  ↓
-src/db/         ← Drizzle schema definitions + client singleton
-  ↓
-src/dal/        ← Data Access Layer (raw queries, neverthrow Result)
-  ↓
-src/services/   ← Business logic, validation, DTO mapping
-  ↓
-src/actions/    ← Server Actions (mutations via "use server")
-src/app/api/    ← API Routes (GET reads)
+```text
+src/db/schema.ts
+        ↓
+src/dal/*.ts
+        ↓
+src/services/*.ts
+        ↓
+src/actions/*.ts       src/app/api/*/route.ts
+        ↓                         ↓
+Server and Client Components
 ```
 
-Each layer has a single responsibility and never skips the next one:
+Dependencies point down the diagram. A DAL module never imports a service. A
+service never imports an action or route handler.
 
-| Layer | Responsibility | Never does |
-|-------|---------------|------------|
-| `db/schema.ts` | Define tables, columns, relations | — |
-| `dal/*.ts` | Run queries against the database | Call services or actions |
-| `services/*.ts` | Validate input, map records to DTOs, combine DAL calls | Import from actions or call the DB directly |
-| `actions/*.ts` | Handle form submissions, revalidate cache, return UI-friendly responses | Read data (that's the API's job) |
-| `api/*/route.ts` | Expose cacheable GET endpoints | Mutate data (that's an action's job) |
+## Module boundaries and names
 
-The direction is always **downward**: actions import services, services import
-DAL, DAL imports the DB client. Reversing this (a DAL calling a service) is a
-layering violation and will be caught in code review.
+The directory states the technical role; the filename states the domain. Use
+`src/dal/examples.ts`, not `src/dal/example-dal.ts`, and apply the same rule to
+services and actions. Component and hook filenames use kebab-case.
 
-### Server Components by Default
+Use `index.ts` only as a deliberate public entry point with consumers outside
+its directory. Do not create empty barrels or barrels that only duplicate
+direct imports.
 
-Every component starts as a Server Component. The `"use client"` directive is
-added only when a component genuinely needs:
+Import source modules through `@/` and use type-only imports where appropriate.
+Shared interfaces and type aliases live in `src/lib/types.ts`, enums in
+`src/lib/enums.ts`, and values that must agree across boundaries in
+`src/lib/constants.ts`. Keep a private value beside its only consumer.
 
-- React hooks (`useState`, `useEffect`, `useActionState`)
-- Browser-only APIs (`localStorage`, `addEventListener`)
-- Event handlers (`onClick`, `onSubmit`)
-- Context providers
+## App Router
 
-This is not an optimization — it's the default architecture. Server Components
-can import services directly, access the database, and render without shipping
-JavaScript to the client. Client Components are the exception, not the rule.
+`src/app/` owns URLs and framework entry points.
 
-**Pattern for data flow:** A Server Component fetches data and passes it as
-props to a Client Component. Never pass `React.ComponentType` from server to
-client — always pass serializable data.
+- Server Components read data by calling a service directly.
+- Client Components use GET route handlers when they need an HTTP read.
+- Server Actions handle application mutations.
+- Route handlers also accept webhooks and proxy external APIs when the project
+  needs a public HTTP boundary.
 
-### neverthrow Result Pattern Over Exceptions
+Keep route files small. They translate framework input and output. Business
+rules stay in services.
 
-The template never throws exceptions in application code. Every operation that
-can fail returns a `Result` type from [neverthrow](https://github.com/supermacro/neverthrow):
+## Database and DAL
 
-```typescript
-// Instead of:
-function getUser(id: string): IUser {
-  throw new Error("not found");
-}
+`src/db/schema.ts` is the Drizzle schema used by Drizzle Kit. `src/db/index.ts`
+creates the shared Postgres client from validated environment values.
 
-// We do:
-function getUser(id: string): Result<IUser, IError> {
-  const user = db.find(id);
-  if (!user) return err(createError(ErrorCode.NotFound, "User not found"));
-  return ok(user);
-}
-```
+DAL modules live in `src/dal/` and are server-only. Name them for the domain,
+such as `examples.ts`. Every query should:
 
-This is not stylistic preference. Exceptions create invisible control flow:
-a `throw` in a deeply nested function can unwind the entire stack, skip cleanup
-code, and leave state inconsistent. With `Result`, every failure path is
-explicit in the type signature. The compiler forces callers to handle both
-success and error cases. Dead code paths auditable at a glance.
+- select the columns its caller needs;
+- convert thrown database failures to an `IError`;
+- return a `Result` or `ResultAsync`;
+- avoid leaking a raw database record beyond the service layer.
 
-**The tradeoff:** You can't ignore a `Result`. That's the point.
+Do not run migration commands against an unknown database. Review generated SQL
+before applying it.
 
-### Barrel Exports at Specific Boundaries
+## Services
 
-Barrel files (`index.ts`) exist only at module boundaries where consumers should
-not care about internal file structure:
+Services own application rules. They validate inputs, combine DAL calls, and
+map records to serializable DTOs. They have no React, cache, request, or response
+concerns.
 
-- `src/lib/index.ts` — Exports constants, enums, types, utils, logger, retry.
-  Does **not** export env/config, errors, SEO helpers, or schema validators.
-- `src/helpers/index.ts` — Exports cookies and storage helpers.
-  Does **not** export the API fetcher (`api.ts`).
+The example service validates with `createExampleSchema`, calls the examples
+DAL, and converts `Date` to an ISO string. That is enough work to justify the
+layer. A service that only forwards one call should be questioned.
 
-Barrels are not used inside `src/components/`, `src/services/`, `src/dal/`, or
-`src/actions/`. Those directories use direct file imports. This prevents hidden
-circular dependencies and keeps the dependency graph explicit.
+## Server Actions
 
-The rule: barrel at the **public API boundary** of a module, not at every folder.
+`src/actions/base.ts` wraps protected mutations. Its current context resolver
+returns no user, so protected actions reject requests with `Unauthorized`.
+Replace that resolver with a verified server-side session before using the
+starter in an application.
 
----
+The wrapper authenticates first, parses input, calls the handler, and converts
+unexpected failures to a safe internal error. Feature actions translate that
+result to the shape needed by `useActionState` and revalidate affected routes.
 
-## Data Layer
+## Shared definitions and errors
 
-### Schema Definition (`src/db/schema.ts`)
+The repository centralizes shared definitions:
 
-Drizzle schemas define the database shape. Tables, columns, types, and relations
-live here. This is the source of truth that Drizzle Kit uses to generate
-migrations.
+- `src/lib/types.ts` contains interfaces and type aliases.
+- `src/lib/enums.ts` contains error codes, methods, statuses, and fixed sets.
+- `src/lib/constants.ts` contains values shared across boundaries.
+- `src/lib/errors.ts` creates and maps typed errors.
 
-```typescript
-export const examples = pgTable("examples", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 256 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-```
+Add a value to a registry only when separate parts of the app must agree on it.
 
-The schema file does not contain queries, business logic, or validation. It is
-purely structural. The inferred type (`typeof examples.$inferSelect`) is
-exported to `src/lib/types.ts` as `TExampleRecord` — the raw database shape.
+Expected failures use `neverthrow`. Catch a throwing dependency where it enters
+the application, add useful context for logs, and return a message safe for the
+caller. `unwrapResultOrThrow` is an escape hatch for framework boundaries. It
+does not belong in DAL, service, or action code.
 
-### Database Client (`src/db/index.ts`)
+## Components
 
-A singleton `getDb()` function returns the Drizzle client instance. On first
-call it creates a Postgres connection pool using the URL from validated
-environment variables. Subsequent calls reuse the existing instance.
+`src/components/ui/` contains shadcn/ui components. `src/components/app/`
+groups project components by size:
 
-Serverless deployments should set `DATABASE_POOL_SIZE=1` to avoid connection
-exhaustion. Traditional server environments default to 10 connections.
+- atoms are small reusable controls or wrappers;
+- molecules combine a few atoms;
+- compounds own a feature-level UI concern.
 
-### Data Access Layer (`src/dal/*.ts`)
+The size labels are a navigation aid. Move a component when its responsibility
+changes. Do not create an empty folder or barrel to complete the taxonomy.
 
-The DAL owns all database interaction. Every function:
+Server Components are the default. A component needs `"use client"` when it
+uses state, effects, browser APIs, context, or event handlers. Data passed from
+server to client must be serializable.
 
-1. Imports `"server-only"` to prevent accidental client usage.
-2. Uses `ResultAsync.fromThrowable()` to convert Drizzle calls into typed
-   `Result` values.
-3. Returns `ResultAsync<T, IError<ErrorCode>>` — never raw data, never throws.
+## Environment and configuration
 
-```typescript
-export function listExamples(
-  options: IListExamplesOptions = {},
-): ResultAsync<TExampleRecord[], IError<ErrorCode.DbListFailed>> {
-  return ResultAsync.fromThrowable(
-    async () =>
-      getDb()
-        .select()
-        .from(examples)
-        .orderBy(desc(examples.createdAt))
-        .limit(limit),
-    (error: unknown) =>
-      createError(ErrorCode.DbListFailed, "Failed to list examples.", error),
-  )();
-}
-```
+`src/lib/env.ts` validates environment values. `.env.example` documents the
+same contract. `next.config.ts`, Drizzle config, Sentry config, and
+instrumentation files may read `process.env` because they run before app aliases
+and validation are available.
 
-All queries use explicit column selection (`select({ col1: table.col1 })`)
-unless every column is genuinely needed. Bare `select()` is the exception, not
-the rule.
+Review these project-specific settings before deployment:
 
-### Service Layer (`src/services/*.ts`)
+- CSP endpoints and use of `unsafe-inline` or `unsafe-eval`;
+- HSTS preload;
+- image host allowlists.
 
-Services contain business logic. They:
+## Cross-cutting modules
 
-1. Validate inputs with Zod schemas (`safeParse`, never `parse`).
-2. Map raw database records to DTOs (Data Transfer Objects) — flattened,
-   serialized shapes that the UI consumes.
-3. Combine multiple DAL calls when a single operation needs data from several
-   tables.
-4. Return `Result<IExampleDto, IError<...>>` — success is always a DTO.
-
-Services never import from actions. They never call `revalidatePath` or handle
-HTTP concerns. They are pure business logic.
-
-### Actions (`src/actions/*.ts`)
-
-Server Actions use the `"use server"` directive and handle all mutations:
-
-- Form submissions: parse `FormData`, validate, call service, return
-  `{ success, error }` for `useActionState`.
-- Auth: login, logout, session checks.
-- Writes: create, update, delete operations.
-
-Actions use the `createAction()` factory from `action-base.ts`, which provides:
-
-- Auth context extraction from request headers.
-- Automatic input parsing via a `parse` function.
-- A catch-all error handler that converts uncaught exceptions to typed errors.
-
-Form actions in particular return `IFormActionResponse` (`{ success: boolean,
-error?: string, fieldErrors?: Record<string, string[]> }`) — a shape designed
-for `useActionState` in client components.
-
-### API Routes (`src/app/api/*/route.ts`)
-
-API Routes are **GET-only** and handle cacheable data access:
-
-- Fetching data for client components via `fetcher()`.
-- External API proxies (forwarding requests to third-party services).
-- SSR-safe endpoints that Server Components could also call directly.
-
-API Routes never mutate data. If you need a POST/PUT/DELETE, that belongs in a
-Server Action. This boundary is strict and enforced by convention.
-
----
-
-## SEO & Answer Engine Optimization (AEO)
-
-The template includes a comprehensive SEO/AEO system designed for both traditional search engines and AI/LLM crawlers.
-
-### Layer 1: Core Metadata (`src/lib/seo/`)
-
-- **`buildSeoMetadata(config)`** — Centralized `Metadata` builder used by every page via `generateMetadata()`. Handles titles, descriptions, canonical URLs, Open Graph, Twitter cards, and robots directives.
-- **8 JSON-LD schema generators** — `Organization`, `WebSite`, `BreadcrumbList`, `BlogPosting`, `FAQPage`, `CollectionPage`, `ItemList`, `VacationRental`. Each generates standard schema.org structured data.
-- **`seo/` barrel export** — All SEO functions are exported from `@/lib/seo`.
-
-### Layer 2: Components
-
-- **`JsonLd`** — XSS-safe `<script type="application/ld+json">` component.
-- **`Breadcrumbs`** — Compound: renders JSON-LD `BreadcrumbList` + visual semantic `<nav>` with `aria-label` and `aria-current`.
-- **`BreadcrumbTrail`** — Accessible breadcrumb navigation with `<ol>`/`<li>` structure.
-
-### Layer 3: App-Level Files
-
-| File | Purpose |
-|------|---------|
-| `app/robots.ts` | Environment-aware robots.txt with `AI_CRAWLERS` rules |
-| `app/sitemap.ts` | Dynamic sitemap.xml with priorities and change frequencies |
-| `app/opengraph-image.tsx` | Dynamic OG image generation via `next/og` |
-| `app/llms.txt/route.ts` | AEO plaintext file for AI crawlers (site info, pages, stack) |
-| `app/layout.tsx` | Root layout renders Organization + WebSite JSON-LD site-wide |
-
-### Rules
-
-- Every public page MUST export `generateMetadata()` using `buildSeoMetadata()`.
-- Every public page MUST include relevant JSON-LD schemas via `JsonLd` or `Breadcrumbs`.
-- Pages with navigation context MUST include `Breadcrumbs` (JSON-LD + visual).
-- The `llms.txt` route must be kept in sync as the site grows.
-- See `AGENTS.md` for the full SEO/AEO requirements checklist.
-
----
-
-## Environments
-
-| Environment | Env File | Env Sourcing | Notes |
-|-------------|----------|-------------|-------|
-| **Local** | `.env` (not tracked) | Copy from `.env.example` | Next.js loads local environment files; the database runs locally or via Docker |
-| **Staging** | Project-level env vars in deployment platform | CI/CD injects staging values | Used for preview deployments, integration tests, and UAT |
-| **Production** | Project-level env vars in deployment platform | CI/CD injects production values | Secrets managed through platform UI (Vercel, Railway, etc.) — never in repo |
-
-All environment variables are validated at startup by `@t3-oss/env-core` with
-Zod schemas in `src/lib/env.ts`. If a required variable is missing or
-malformed, the application fails immediately with a clear error — not silently
-at runtime with `undefined`.
-
-Server-only variables (`DATABASE_URL`, `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, etc.)
-are never prefixed with `NEXT_PUBLIC_`. Client-safe variables
-(`NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SITE_URL`) are explicitly prefixed so
-Next.js knows to inline them into the client bundle.
-
-**Key rules:**
-- Always import env vars from `@/lib/env` or `@/lib/config` — never use `process.env` directly in application code.
-- Never commit `.env` files (already in `.gitignore`).
-- Keep `.env.example` in sync with the actual schema in `src/lib/env.ts`.
-- Add new variables to BOTH `src/lib/env.ts` AND `.env.example` before using them.
-- `NODE_ENV` is a compile-time constant in Next.js — `process.env.NODE_ENV` is safe to use directly in client code (Next.js replaces it at build time), but prefer `env.NODE_ENV` in server code.
-- Sentry config files (`sentry.*.config.ts`), `next.config.ts`, and `drizzle.config.ts` are the ONLY exceptions where `process.env` is acceptable — they cannot import from `@/lib/env` due to module resolution ordering.
+Logging, Sentry, analytics, SEO, testing, and performance each have one owner in
+`docs/guides/`. Those guides describe their current implementation and
+project-specific replacement points. Do not restate their policies here.

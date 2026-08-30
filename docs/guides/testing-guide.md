@@ -1,428 +1,110 @@
-# Testing Guide
+# Testing
 
-> A practical guide for writing tests in this project. Follow these patterns for consistent, maintainable test coverage.
+Tests protect behavior that could break. Test count and coverage percentage are
+poor targets because generated tests can raise both without finding a bug.
 
----
+## Current setup
 
-## Table of Contents
-
-1. [Testing Philosophy](#testing-philosophy)
-2. [Setup & Configuration](#setup--configuration)
-3. [Writing Unit Tests](#writing-unit-tests)
-4. [Writing Integration Tests](#writing-integration-tests)
-5. [Writing Component Tests](#writing-component-tests)
-6. [Writing E2E Tests](#writing-e2e-tests)
-7. [Test Rules & Conventions](#test-rules--conventions)
-8. [What to Test](#what-to-test)
-9. [Implementation Roadmap](#implementation-roadmap)
-
----
-
-## Testing Philosophy
-
-We follow the **Testing Trophy** (Kent C. Dodds) — integration tests get the most investment because they give the best confidence-to-effort ratio:
-
-```
-         E2E (Playwright)
-         Few — critical user journeys
-       INTEGRATION
-       MOST effort — service + component tests
-     UNIT
-     Moderate — complex business logic
-   STATIC
-   Heavy — TypeScript, Biome (already done)
-```
-
-| Layer | Investment | Purpose |
-|-------|------------|---------|
-| **Static** (TypeScript, Biome) | Heavy | Catch type errors, formatting |
-| **Unit** | Moderate | Complex logic in isolation |
-| **Integration** | **MOST** (60%) | How units work together |
-| **E2E** | Few (10%) | Critical user journeys |
-
----
-
-## Setup & Configuration
-
-### Framework
-
-This project uses **Vitest** with `globals: true`:
-
-```typescript
-// vitest.config.ts
-import path from "path";
-import { defineConfig } from "vitest/config";
-
-export default defineConfig({
-  test: {
-    environment: "node",
-    globals: true,
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-});
-```
-
-### File Structure
-
-Tests mirror the source directory:
-
-```
-src/__tests__/
-├── actions/
-│   └── action-base.test.ts
-├── lib/
-│   ├── errors.test.ts
-│   └── examples-schema.test.ts
-├── services/
-│   └── example.test.ts
-├── components/
-│   └── ExampleComponent.test.tsx
-├── mocks/
-│   └── server-only.ts
-└── helpers.ts
-```
-
----
-
-## Writing Unit Tests
-
-Unit tests verify a single function or module in isolation. They should be **fast, deterministic, and test behavior not implementation**.
-
-### What Makes a Good Unit Test
-
-```typescript
-// ✅ GOOD — tests a pure function with clear input/output
-it("formats a valid slug correctly", () => {
-  expect(formatSlug("Hello World")).toBe("hello-world");
-});
-
-it("returns empty string for empty input", () => {
-  expect(formatSlug("")).toBe("");
-});
-
-// ✅ GOOD — tests error creation
-it("creates error with correct code and message", () => {
-  const error = createAppError(ErrorCode.NotFound, "Resource not found");
-  expect(error.code).toBe(ErrorCode.NotFound);
-  expect(error.message).toBe("Resource not found");
-});
-
-// ❌ BAD — tests implementation details (brittle)
-it("calls the internal helper function with correct args", () => {
-  const spy = vi.spyOn(internalModule, "helper");
-  formatSlug("Hello");
-  expect(spy).toHaveBeenCalledWith("Hello");
-});
-```
-
-### Unit Test Examples
-
-**Testing utilities (`src/__tests__/lib/utils.test.ts`):**
-```typescript
-import { cn, isClientSide, formatSlug } from "@/lib/utils";
-
-describe("cn", () => {
-  it("merges class names correctly", () => {
-    expect(cn("px-4", "py-2")).toBe("px-4 py-2");
-  });
-
-  it("handles conditional classes", () => {
-    expect(cn("base", false && "hidden", "visible")).toBe("base visible");
-  });
-
-  it("removes conflicting tailwind classes", () => {
-    expect(cn("px-4", "px-6")).toBe("px-6");
-  });
-});
-```
-
-**Testing errors (`src/__tests__/lib/errors.test.ts`):**
-```typescript
-import { createError, tryCatch, createAppError } from "@/lib/errors";
-import { ok, err } from "neverthrow";
-import { ErrorCode } from "@/lib/enums";
-
-describe("createAppError", () => {
-  it("creates error with code and message", () => {
-    const error = createAppError(ErrorCode.NotFound, "Item not found", { id: 42 });
-    expect(error.code).toBe(ErrorCode.NotFound);
-    expect(error.message).toBe("Item not found");
-    expect(error.details).toEqual({ id: 42 });
-  });
-});
-
-describe("tryCatch", () => {
-  it("returns ok for successful promise", async () => {
-    const result = await tryCatch(Promise.resolve("data"));
-    expect(result.isOk()).toBe(true);
-    expect(result._unsafeUnwrap()).toBe("data");
-  });
-
-  it("returns err for rejected promise", async () => {
-    const result = await tryCatch(Promise.reject(new Error("fail")));
-    expect(result.isErr()).toBe(true);
-  });
-});
-```
-
----
-
-## Writing Integration Tests
-
-Integration tests verify that multiple units work together. This is where the **highest return on investment** lives.
-
-### Service Integration Tests
-
-Mock at the **DAL/API boundary**, not at the HTTP level:
-
-```typescript
-// src/__tests__/services/example.test.ts
-import { ok, err } from "neverthrow";
-import { processData } from "@/services/example-service";
-import * as dal from "@/dal/example-dal";
-import { createAppError } from "@/lib/errors";
-import { ErrorCode } from "@/lib/enums";
-
-// Mock the DAL layer
-vi.mock("@/dal/example-dal");
-
-describe("processData", () => {
-  it("returns DTO when DAL succeeds", async () => {
-    vi.mocked(dal.getData).mockResolvedValue(
-      ok({ id: "1", name: "Test Item" })
-    );
-
-    const result = await processData("1");
-    expect(result.isOk()).toBe(true);
-    if (result.isOk()) {
-      expect(result.value).toEqual({
-        id: "1",
-        displayName: "Test Item", // DTO mapping applied
-      });
-    }
-  });
-
-  it("propagates not-found error from DAL", async () => {
-    vi.mocked(dal.getData).mockResolvedValue(
-      err(createAppError(ErrorCode.NotFound, "Item not found", { id: "999" }))
-    );
-
-    const result = await processData("999");
-    expect(result.isErr()).toBe(true);
-    if (result.isErr()) {
-      expect(result.error.code).toBe(ErrorCode.NotFound);
-    }
-  });
-
-  it("handles DAL failure gracefully", async () => {
-    vi.mocked(dal.getData).mockResolvedValue(
-      err(createAppError(ErrorCode.DatabaseError, "Connection failed"))
-    );
-
-    const result = await processData("1");
-    expect(result.isErr()).toBe(true);
-  });
-});
-```
-
-### Mocking Server-Only Modules
-
-```typescript
-// src/__tests__/mocks/server-only.ts
-// Make Vitest ignore "server-only" imports
-const serverOnlyMock = new Proxy(
-  {},
-  {
-    get: () => serverOnlyMock,
-    apply: () => serverOnlyMock,
-  },
-);
-
-export default serverOnlyMock;
-```
-
----
-
-## Writing Component Tests
-
-Component tests verify rendered output — **never internal state**.
-
-### Setup
-
-```typescript
-// @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-```
-
-### Component Test Examples
-
-```typescript
-// src/__tests__/components/ExampleComponent.test.tsx
-// @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
-import { ExampleComponent } from "@/components/app/atoms/ExampleComponent";
-
-describe("ExampleComponent", () => {
-  it("renders with required props", () => {
-    render(<ExampleComponent name="Test" description="A test component" />);
-
-    expect(screen.getByText("Test")).toBeInTheDocument();
-    expect(screen.getByText("A test component")).toBeInTheDocument();
-  });
-
-  it("renders with correct heading hierarchy", () => {
-    render(<ExampleComponent name="Test" description="Desc" />);
-
-    const heading = screen.getByRole("heading", { level: 2 });
-    expect(heading).toHaveTextContent("Test");
-  });
-
-  it("shows fallback when name is empty", () => {
-    render(<ExampleComponent name="" description="" />);
-
-    expect(screen.getByText("No data available")).toBeInTheDocument();
-  });
-});
-```
-
-### Component Test Rules
-
-- Query by **accessible roles and text** — never by CSS class names or DOM structure
-- Test **error states** (empty data, API failure, missing props) — not just happy path
-- All clickable elements must have `cursor-pointer`
-- Use `userEvent` over `fireEvent` for realistic interaction simulation
-
----
-
-## Writing E2E Tests
-
-E2E tests simulate real user journeys in a real browser. Use Playwright sparingly for critical paths.
-
-### Setup
+Vitest runs in Node with the `@/` alias. `vitest.config.ts` replaces the
+`server-only` poison-pill package with an empty test module.
 
 ```bash
-bun install -d @playwright/test
-bunx playwright install chromium
+bun run test
+bun run test:watch
+bun run test:coverage
 ```
 
-**`playwright.config.ts`:**
-```typescript
-import { defineConfig } from "@playwright/test";
+The current suite covers:
 
-export default defineConfig({
-  testDir: "./e2e",
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  use: {
-    baseURL: "http://localhost:3000",
-    trace: "on-first-retry",
-  },
-  webServer: {
-    command: "bun run build && bun run start",
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-  },
-});
-```
+- fail-closed action authentication and handler ordering;
+- example mutation rejection before authentication exists;
+- form schema trimming and database-length limits;
+- error-code to HTTP-status mapping;
+- transient network error detection.
 
-### E2E Test Examples
+## Test selection
 
-```typescript
-// e2e/homepage.spec.ts
-import { test, expect } from "@playwright/test";
+Use the lowest layer that catches the real failure.
 
-test("homepage loads with all sections", async ({ page }) => {
-  await page.goto("/");
+| Check | Use it for |
+| --- | --- |
+| Type and lint | invalid imports, unsafe types, framework rules |
+| Unit test | pure validation, mapping, policy, and state transitions |
+| Integration test | SQL, constraints, serialization, and layer boundaries |
+| Browser test | critical journeys through a production build |
+| Contract test | independently deployed consumers and providers |
 
-  await expect(page.getByRole("banner")).toBeVisible();
-  await expect(page.getByRole("main")).toBeVisible();
-  await expect(page.getByRole("contentinfo")).toBeVisible();
-});
+Do not repeat a unit test through every higher layer. One regression belongs at
+the lowest layer that still observes the failure.
 
-test("navigation links work correctly", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("link", { name: "Home" }).click();
+## A useful test
 
-  expect(page.url()).toBe("http://localhost:3000/");
-});
-```
+Before writing a test, name the bug it should catch. The test should fail when
+that bug is introduced, assert a public result or side effect, run independently,
+and survive an internal refactor.
 
-### E2E Test Rules
+Avoid tests that only:
 
-- Tests must be **independent** — no shared state
-- Use `data-testid` **sparingly** — prefer accessible queries (`getByRole`, `getByText`)
-- One user journey per spec file
-- Keep under 10 E2E tests total
+- confirm a constant equals its definition;
+- assert that a mock was called with implementation details;
+- snapshot a large component tree without a specific contract;
+- mirror branches line by line for coverage;
+- test behavior owned by React, Next.js, Drizzle, or Zod.
 
----
+## Mocks
 
-## Test Rules & Conventions
+Use real values and real local implementations when they are deterministic and
+cheap. Mock time, randomness, third-party networks, and failures that cannot be
+created safely.
 
-### Hard Rules
+Mocking the DAL in a service test can verify service policy. It does not verify
+SQL. A database integration test should use disposable PostgreSQL and the real
+Drizzle schema.
 
-| # | Rule | Reason |
-|---|------|--------|
-| 1 | NEVER use `as any`, `@ts-ignore`, `@ts-expect-error` in tests | Type safety applies everywhere |
-| 2 | Prefer `function` declarations over arrow functions for test blocks | Consistent style |
-| 3 | Test **behavior, not implementation** | Implementation changes break tests unnecessarily |
-| 4 | One logical assertion per test | Isolates failures, clear intent |
-| 5 | Use descriptive test names that read like user stories | `"shows price on card"` not `"extractPriceInfo returns value"` |
+## Database tests
 
-### Naming Conventions in Tests
+Add Testcontainers when the first real project depends on repository queries or
+constraints. Run migrations against a fresh PostgreSQL container, seed only the
+records needed by the test, and clean up the container after the suite.
 
-- Follow the same project conventions: interfaces with `I`, types with `T`, enums with PascalCase
-- Import types from `@/lib/types`, enums from `@/lib/enums`, constants from `@/lib/constants`
-- Never hardcode strings that exist as constants — import them:
-  ```typescript
-  // ✅ GOOD
-  import { ErrorCode } from "@/lib/enums";
-  expect(result.error.code).toBe(ErrorCode.NotFound);
+Do not add Testcontainers to this generic starter solely to exercise the
+placeholder examples table. The Docker requirement is worth it when a project
+has real query behavior to protect.
 
-  // ❌ BAD
-  expect(result.error.code).toBe("NOT_FOUND");
-  ```
+## Browser tests
 
-### Mocking Rules
+Add Playwright when the app has a critical user journey such as sign-in,
+checkout, permission enforcement, or a destructive workflow. Test the
+production build, locate controls by accessible role or label, and give each
+test isolated data.
 
-- Mock at the **module boundary** (DAL, API client), not at the HTTP level
-- Use `vi.mocked()` for typed mocks
-- Reset mocks between tests with `beforeEach(() => vi.clearAllMocks())`
-- For `server-only` modules, create mock files in `src/__tests__/mocks/`
+Start with a few Chromium tests in pull requests. Add browsers when the support
+policy requires them. A homepage heading assertion alone does not justify a
+browser suite.
 
----
+## Coverage and mutation testing
 
-## What to Test
+Coverage is a map of executed code. Review changed-file coverage to find
+untested risk, but do not enforce a repository-wide percentage.
 
-### Priority Order
+Mutation testing can challenge important pure business rules after they exist.
+Run it on selected modules or on a schedule. A full Stryker run on every pull
+request is unnecessary for the current sample domain.
 
-1. **Pure functions** (utilities, formatters, validators) — easiest, most stable
-2. **Service layer** (business logic, DTO mapping) — highest ROI
-3. **Error paths** (what happens when API fails, data is missing, input is invalid)
-4. **Component rendering** (output verification, not internal state)
-5. **Critical user journeys** (E2E)
+## Review checklist
 
-### What NOT to Test
+- The test names the behavior and failure.
+- The assertion observes the public contract.
+- Data and time are deterministic.
+- The test does not depend on execution order.
+- A cheaper test does not already catch the same bug.
+- The production code was not distorted to satisfy the test.
 
-- ❌ Third-party library internals (they test their own code)
-- ❌ Configuration files (biome.json, next.config.ts)
-- ❌ Type definitions (TypeScript catches this at compile time)
-- ❌ Simple getters or pass-through functions (tested implicitly)
-- ❌ CSS classes and styling (snapshot tests for UI are brittle)
+## References
 
-### Test Coverage Targets
-
-| Module | Target |
-|--------|--------|
-| `src/lib/errors.ts` | 90%+ |
-| `src/lib/utils.ts` | 90%+ |
-| `src/lib/retry.ts` | 80%+ |
-| `src/lib/guards.ts` | 90%+ |
-| `src/services/*.ts` | 70%+ |
-| Key components | 70%+ |
+- [Next.js testing guides](https://nextjs.org/docs/app/guides/testing)
+- [Vitest testing in practice](https://vitest.dev/guide/learn/testing-in-practice)
+- [Playwright best practices](https://playwright.dev/docs/best-practices)
+- [Google: do not overuse mocks](https://testing.googleblog.com/2013/05/testing-on-toilet-dont-overuse-mocks.html)
+- [The practical test pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
+- [Testcontainers for Node.js](https://node.testcontainers.org/)

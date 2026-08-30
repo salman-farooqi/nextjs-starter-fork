@@ -331,7 +331,7 @@
         </div>
       </div>
       <h1>Audit baseline and first <span class="no-break">hardening slice.</span></h1>
-      <p class="lede">The audit found a useful starter whose guarantees did not match its "production-ready" claim. The first implementation slice has now repaired the reproducible install, patched direct dependencies, enabled complete lint coverage, adopted native route types, added behavior tests, expanded CI, aligned the environment contract, and made the example mutation fail closed. The deeper architecture and documentation work remains.</p>
+      <p class="lede">The audit found a useful starter whose guarantees did not match its "production-ready" claim. This report preserves the baseline and recommendations observed during that review; later repository changes are intentionally not folded back into the evidence.</p>
       <div class="meta">
         <span><strong>Scope:</strong> code, architecture, security, CI, dependencies, docs, agent instructions</span>
         <span><strong>Method:</strong> history scan, call-path tracing, validation runs, Ponytail deletion audit, current primary docs</span>
@@ -346,13 +346,17 @@
     </nav>
 
     <main>
+      <div class="callout" style="margin-bottom:18px">
+        <h3>Point-in-time report</h3>
+        <p>This is a dated audit artifact, not current repository policy. Use <a href="../../README.md">README.md</a> for orientation, <a href="../../AGENTS.md">AGENTS.md</a> for agent constraints, <a href="../../CONTRIBUTING.md">CONTRIBUTING.md</a> for contribution workflow, and <a href="../architecture.md">architecture.md</a> plus the guides for current technical rules.</p>
+      </div>
       <section id="verdict">
         <h2>Executive verdict</h2>
         <div class="grid grid-4">
           <article class="card flat"><div class="eyebrow">High-severity audit</div><div class="metric" style="color:var(--good)">0</div><p class="muted small">one moderate advisory remains below the enforced threshold</p></article>
           <article class="card flat"><div class="eyebrow">Behavior tests</div><div class="metric" style="color:var(--good)">16</div><p class="muted small">authentication, schema, and error seams</p></article>
           <article class="card flat"><div class="eyebrow">Global registries</div><div class="metric">97</div><p class="muted small">59 type, 21 constant, and 17 enum exports</p></article>
-          <article class="card flat"><div class="eyebrow">Baseline docs / source</div><div class="metric">1.58×</div><p class="muted small">the documentation reduction is still in progress</p></article>
+          <article class="card flat"><div class="eyebrow">Baseline docs / source</div><div class="metric">1.58×</div><p class="muted small">measurement captured before the documentation rewrite</p></article>
         </div>
         <div class="callout danger" style="margin-top:20px">
           <h3>Release decision</h3>
@@ -393,7 +397,7 @@
           <thead><tr><th>Priority</th><th>Finding</th><th>Evidence</th><th>Required outcome</th></tr></thead>
           <tbody>
             <tr><td><span class="badge strong">Resolved</span></td><td><strong>Known vulnerable production dependencies</strong></td><td>Next is now 16.3.3 and Drizzle ORM is 0.45.2; the high-severity audit gate passes.</td><td>Keep automated updates and the enforced audit threshold.</td></tr>
-            <tr><td><span class="badge strong">Resolved</span></td><td><strong>No trustworthy mutation identity boundary</strong></td><td><a href="../../src/actions/action-base.ts">action-base.ts</a> no longer trusts client headers, and <a href="../../src/actions/example-actions.ts">createExampleAction</a> requires authentication. Mutations remain unavailable until a verified server-side session adapter is installed.</td><td>Integrate the chosen identity provider without weakening the fail-closed default.</td></tr>
+            <tr><td><span class="badge strong">Resolved</span></td><td><strong>No trustworthy mutation identity boundary</strong></td><td><a href="../../src/actions/base.ts">base.ts</a> no longer trusts client headers, and <a href="../../src/actions/examples.ts">createExampleAction</a> requires authentication. Mutations remain unavailable until a verified server-side session adapter is installed.</td><td>Integrate the chosen identity provider without weakening the fail-closed default.</td></tr>
             <tr><td><span class="badge strong">Resolved</span></td><td><strong>Install and CI are not reproducible</strong></td><td>Bun is pinned, the lockfile is current, and CI uses <code>bun ci</code>.</td><td>Preserve the frozen install path.</td></tr>
             <tr><td><span class="badge strong">Resolved</span></td><td><strong>No behavior is verified</strong></td><td>Focused behavior tests now run locally and in CI alongside a production build and audit.</td><td>Grow coverage at new feature seams, not by implementation detail.</td></tr>
             <tr><td><span class="badge p1">P1</span></td><td><strong>Server/client boundaries are porous</strong></td><td>The analytics barrel mixes client and server code; the server analytics module lacks <code>server-only</code>; the client instrumentation reads the server DSN name.</td><td>Separate entry points by runtime and ensure secrets cannot enter client graphs.</td></tr>
@@ -512,10 +516,10 @@ flowchart LR
       </section>
 
       <section id="docs">
-        <h2>Documentation and agent-instruction integrity</h2>
+        <h2>Documentation findings at audit time</h2>
         <div class="grid grid-2">
           <article class="card flat">
-            <h3>Claims contradicted by the repository</h3>
+            <h3>Contradictions found in the baseline</h3>
             <ul>
               <li><code>llms.txt</code> says dynamic OG images exist; no OG image route exists.</li>
               <li>Architecture docs list <code>AI_CRAWLERS</code> integration; robots rules are hardcoded and the constant is unused.</li>
@@ -562,7 +566,7 @@ flowchart LR
             <li><a href="../../.github/workflows/ci.yml">CI workflow</a> , frozen install and mandatory gates</li>
             <li><a href="../../next.config.ts">Next config</a> , native typed routes and remaining security defaults</li>
             <li><a href="../../src/lib/types.ts">global types</a> , mixed ownership and duplicate breadcrumb interface</li>
-            <li><a href="../../src/actions/action-base.ts">action base</a> , fail-closed identity boundary</li>
+            <li><a href="../../src/actions/base.ts">action base</a> , fail-closed identity boundary</li>
             <li><a href="../../src/lib/cookie-consent.ts">cookie consent</a> , unconditional consent</li>
             <li><a href="../../src/lib/env.ts">environment schema</a> , aligned database and test contract</li>
             <li><a href="../../AGENTS.md">AGENTS.md</a> , global-registry and blanket policy</li>
