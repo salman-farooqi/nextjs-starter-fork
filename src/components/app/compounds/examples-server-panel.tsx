@@ -1,5 +1,5 @@
 import type { IExampleDto } from "@/lib/types";
-import { listExamplesService } from "@/services/example-service";
+import { listExamplesService } from "@/services/examples";
 import { ExampleForm } from "./example-form";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {

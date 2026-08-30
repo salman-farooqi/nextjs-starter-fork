@@ -5,7 +5,7 @@ import {
   createAction,
   getActionContext,
   requireAuthContext,
-} from "@/actions/action-base";
+} from "@/actions/base";
 import { ErrorCode } from "@/lib/enums";
 
 describe("action authentication", function actionAuthenticationTests() {

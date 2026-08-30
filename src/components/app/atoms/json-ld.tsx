@@ -1,6 +1,4 @@
-export interface IJsonLdProps {
-  data: Record<string, unknown>;
-}
+import type { IJsonLdProps } from "@/lib/types";
 
 export function JsonLd({ data }: IJsonLdProps) {
   const jsonLd = JSON.stringify(data).replace(/</g, "\\u003c");

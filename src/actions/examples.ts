@@ -5,7 +5,7 @@ import "server-only";
 import { err, ok, type Result } from "neverthrow";
 import { revalidatePath } from "next/cache";
 
-import { createAction } from "@/actions/action-base";
+import { createAction } from "@/actions/base";
 import { ROUTES } from "@/lib/constants";
 import { ErrorCode, LogContext } from "@/lib/enums";
 import { createError } from "@/lib/errors";
@@ -18,7 +18,7 @@ import type {
   TCreateExampleInput,
   TExampleActionErrorCodes,
 } from "@/lib/types";
-import { createExampleService } from "@/services/example-service";
+import { createExampleService } from "@/services/examples";
 
 function parseExampleFormData(
   rawInput: unknown,

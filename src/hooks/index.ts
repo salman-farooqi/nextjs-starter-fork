@@ -1,3 +1,3 @@
-export { useDrawOn } from "./useDrawOn";
-export { useMediaQuery } from "./useMediaQuery";
-export { useReveal } from "./useReveal";
+export { useDrawOn } from "./use-draw-on";
+export { useMediaQuery } from "./use-media-query";
+export { useReveal } from "./use-reveal";

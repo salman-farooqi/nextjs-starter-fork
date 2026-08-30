@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { JsonLd } from "@/components/app/atoms/JsonLd";
+import { JsonLd } from "@/components/app/atoms/json-ld";
 import {
   buildSeoMetadata,
   getOrganizationSchema,

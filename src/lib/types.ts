@@ -370,13 +370,6 @@ export interface INavGroup {
   links: INavLink[];
 }
 
-// ─── Breadcrumbs ────────────────────────────────────────────────────────
-
-export interface IBreadcrumbItem {
-  name: string;
-  url: string;
-}
-
 export interface IBreadcrumbsProps {
   items: IBreadcrumbItem[];
 }

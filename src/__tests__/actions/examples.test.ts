@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createExampleAction } from "@/actions/example-actions";
+import { createExampleAction } from "@/actions/examples";
 import { ErrorCode } from "@/lib/enums";
 
 describe("createExampleAction", function createExampleActionTests() {

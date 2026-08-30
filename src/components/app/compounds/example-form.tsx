@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 
-import { createExampleFormAction } from "@/actions/example-actions";
+import { createExampleFormAction } from "@/actions/examples";
 
 const initialState = { success: false, error: undefined };
 

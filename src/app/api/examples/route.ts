@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { ErrorCode } from "@/lib/enums";
 import type { IError } from "@/lib/types";
-import { listExamplesService } from "@/services/example-service";
+import { listExamplesService } from "@/services/examples";
 
 // ISR: cache GET responses for 60 s.
 export const revalidate = 60;

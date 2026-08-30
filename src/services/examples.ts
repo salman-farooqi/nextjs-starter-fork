@@ -2,7 +2,7 @@ import "server-only";
 
 import { err, ok, type Result } from "neverthrow";
 
-import { createExample, listExamples } from "@/dal/example-dal";
+import { createExample, listExamples } from "@/dal/examples";
 import { ErrorCode } from "@/lib/enums";
 import { createError } from "@/lib/errors";
 import { createExampleSchema } from "@/lib/examples-schema";
