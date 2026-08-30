@@ -14,6 +14,10 @@ export default defineConfig({
   test: {
     exclude: ["e2e/**", "**/node_modules/**", ".next/**"],
     environment: "node",
+    env: {
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/app",
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+    },
     globals: true,
     sequence: { hooks: "stack" },
     maxConcurrency: 1,
