@@ -15,6 +15,11 @@ export const HTTP_STATUS = {
   SERVICE_UNAVAILABLE: 503,
 } as const;
 
+export const ACTION_MESSAGES = {
+  UNEXPECTED_FAILURE_LOG: "Server action failed unexpectedly.",
+  UNEXPECTED_FAILURE_PUBLIC: "Unable to complete the request.",
+} as const;
+
 // ─── Content Types ─────────────────────────────────────────────────────────
 
 export const HTTP_CONTENT_TYPE = {
@@ -101,6 +106,14 @@ export const FORM_FIELDS = {
     NAME: "name",
     EMAIL: "email",
   },
+} as const;
+
+export const EXAMPLE_LIMITS = {
+  NAME_MIN_LENGTH: 1,
+  NAME_MAX_LENGTH: 256,
+  LIST_MIN_SIZE: 1,
+  LIST_DEFAULT_SIZE: 50,
+  LIST_MAX_SIZE: 100,
 } as const;
 
 // ─── Search Param Keys ────────────────────────────────────────────────────

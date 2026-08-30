@@ -1,10 +1,11 @@
 import "server-only";
 
 import { err, ok, type Result } from "neverthrow";
-import { headers } from "next/headers";
 
-import { ErrorCode } from "@/lib/enums";
+import { ACTION_MESSAGES } from "@/lib/constants";
+import { ErrorCode, LogContext } from "@/lib/enums";
 import { createError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 import type {
   IActionContext,
   IActionDefinition,
@@ -13,17 +14,23 @@ import type {
   TAuthErrorCodes,
 } from "@/lib/types";
 
-export async function getActionContext(): Promise<IActionContext> {
-  const requestHeaders = await headers();
+function getErrorMetadata(error: unknown): Record<string, unknown> {
+  if (!(error instanceof Error)) return { error };
 
-  // ⚠️ EXAMPLE ONLY: These headers are set by the client and are NOT
-  // verified by the server. In production, derive the user identity from
-  // a validated session token (e.g. JWT, NextAuth session, Clerk, etc.)
-  // rather than trusting arbitrary request headers.
   return {
-    userId: requestHeaders.get("x-user-id"),
-    role: requestHeaders.get("x-user-role"),
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
   };
+}
+
+export function getActionContext(): Promise<IActionContext> {
+  // Authentication is intentionally fail-closed. Replace this implementation
+  // with a verified server-side session before enabling authenticated actions.
+  return Promise.resolve({
+    userId: null,
+    role: null,
+  });
 }
 
 export function requireAuthContext(
@@ -51,11 +58,9 @@ export function createAction<TInput, TOutput, TCode extends ErrorCode>(
     try {
       const context = await getActionContext();
 
-      if (definition.requireAuth) {
-        const authResult = requireAuthContext(context);
-        if (authResult.isErr()) {
-          return err(authResult.error);
-        }
+      const authResult = requireAuthContext(context);
+      if (authResult.isErr()) {
+        return err(authResult.error);
       }
 
       const inputResult = definition.parse(rawInput);
@@ -63,13 +68,22 @@ export function createAction<TInput, TOutput, TCode extends ErrorCode>(
         return err(inputResult.error);
       }
 
-      return definition.handler({ input: inputResult.value, context });
+      return await definition.handler({
+        input: inputResult.value,
+        context: authResult.value,
+      });
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred.";
-      return err(createError(ErrorCode.InternalError, message, error));
+      logger.error(
+        LogContext.ErrorHandler,
+        ACTION_MESSAGES.UNEXPECTED_FAILURE_LOG,
+        getErrorMetadata(error),
+      );
+      return err(
+        createError(
+          ErrorCode.InternalError,
+          ACTION_MESSAGES.UNEXPECTED_FAILURE_PUBLIC,
+        ),
+      );
     }
   };
 }

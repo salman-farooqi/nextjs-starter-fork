@@ -6,6 +6,7 @@ import { err, ok, type Result } from "neverthrow";
 import { revalidatePath } from "next/cache";
 
 import { createAction } from "@/actions/action-base";
+import { ROUTES } from "@/lib/constants";
 import { ErrorCode, LogContext } from "@/lib/enums";
 import { createError } from "@/lib/errors";
 import { createExampleSchema } from "@/lib/examples-schema";
@@ -64,7 +65,7 @@ export const createExampleAction = createAction<
       return err(createdResult.error);
     }
 
-    revalidatePath("/");
+    revalidatePath(ROUTES.HOME);
 
     logger.success(
       LogContext.ErrorHandler,

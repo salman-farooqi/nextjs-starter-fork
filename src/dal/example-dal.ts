@@ -5,6 +5,7 @@ import { err, ok, type Result, ResultAsync } from "neverthrow";
 
 import { getDb } from "@/db";
 import { examples } from "@/db/schema";
+import { EXAMPLE_LIMITS } from "@/lib/constants";
 import { ErrorCode } from "@/lib/enums";
 import { createError } from "@/lib/errors";
 import type { IError, IListExamplesOptions, TExampleRecord } from "@/lib/types";
@@ -12,12 +13,22 @@ import type { IError, IListExamplesOptions, TExampleRecord } from "@/lib/types";
 export function listExamples(
   options: IListExamplesOptions = {},
 ): ResultAsync<TExampleRecord[], IError<ErrorCode.DbListFailed>> {
-  const limit = Math.max(1, Math.min(options.limit ?? 50, 100));
+  const limit = Math.max(
+    EXAMPLE_LIMITS.LIST_MIN_SIZE,
+    Math.min(
+      options.limit ?? EXAMPLE_LIMITS.LIST_DEFAULT_SIZE,
+      EXAMPLE_LIMITS.LIST_MAX_SIZE,
+    ),
+  );
 
   return ResultAsync.fromThrowable(
     async () =>
       getDb()
-        .select()
+        .select({
+          id: examples.id,
+          name: examples.name,
+          createdAt: examples.createdAt,
+        })
         .from(examples)
         .orderBy(desc(examples.createdAt))
         .limit(limit),

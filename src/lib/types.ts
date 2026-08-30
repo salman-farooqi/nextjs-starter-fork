@@ -1,8 +1,9 @@
 import type { Result as NeverthrowResult } from "neverthrow";
+import type { z } from "zod/v4";
 
 import type { examples } from "@/db/schema";
 import type { ErrorCode, HttpVerb, LogLevel } from "./enums";
-import type { TCreateExampleInput } from "./examples-schema";
+import type { createExampleSchema } from "./examples-schema";
 
 // ─── Core Framework Types ─────────────────────────────────────────────────
 
@@ -62,7 +63,6 @@ export interface IActionDefinition<
   handler: (
     payload: IActionPayload<TInput>,
   ) => Promise<NeverthrowResult<TOutput, IError<TCode>>>;
-  requireAuth?: boolean;
 }
 
 export type TActionResult<
@@ -82,7 +82,7 @@ export interface IAuthenticatedContext {
 
 export interface IActionPayload<TInput> {
   input: TInput;
-  context: IActionContext;
+  context: IAuthenticatedContext;
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────
@@ -92,6 +92,8 @@ export type TAuthErrorCodes = ErrorCode.Unauthorized;
 // ─── Example Domain ───────────────────────────────────────────────────────
 
 export type TExampleRecord = typeof examples.$inferSelect;
+
+export type TCreateExampleInput = z.infer<typeof createExampleSchema>;
 
 export interface IExampleDto {
   id: number;
@@ -103,8 +105,6 @@ export type TExampleActionErrorCodes =
   | ErrorCode.InvalidForm
   | ErrorCode.ValidationError
   | ErrorCode.DbCreateFailed;
-
-export type { TCreateExampleInput };
 
 export interface IExamplesResponse {
   data: IExampleDto[];
