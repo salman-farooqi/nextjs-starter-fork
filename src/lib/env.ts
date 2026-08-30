@@ -12,7 +12,9 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
     DATABASE_POOL_SIZE: z.coerce.number().default(10),
-    NODE_ENV: z.enum(["production", "development"]).default("development"),
+    NODE_ENV: z
+      .enum(["production", "development", "test"])
+      .default("development"),
     PORT: z.coerce.number().default(3000),
 
     SENTRY_DSN: z.string().url().optional(),

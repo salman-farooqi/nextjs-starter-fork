@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
   "assist": {
     "actions": {
       "source": {
@@ -10,8 +10,6 @@
   "files": {
     "includes": [
       "**",
-      "!**/scripts.local",
-      "!**/scripts",
       "!**/node_modules",
       "!**/.next",
       "!**/.omo/run-continuation",
@@ -19,10 +17,7 @@
       "!**/build",
       "!**/coverage",
       "!**/next-env.d.ts",
-      "!**/src/components/ui",
-      "!**/public",
-      "!**/*.test.ts",
-      "!**/tsconfig.json",
+      "!**/src/db/migrations",
       "!**/playwright-report",
       "!**/test-results"
     ]
@@ -48,8 +43,16 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "drizzle": "recommended",
+      "next": "recommended",
+      "project": "recommended",
+      "react": "recommended",
+      "tailwind": "recommended",
+      "test": "recommended"
+    },
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "correctness": {
         "noUnusedFunctionParameters": {
           "level": "error"
