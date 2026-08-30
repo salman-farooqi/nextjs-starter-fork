@@ -124,11 +124,16 @@ same contract. `next.config.ts`, Drizzle config, Sentry config, and
 instrumentation files may read `process.env` because they run before app aliases
 and validation are available.
 
-Review these project-specific settings before deployment:
+The default CSP supports static rendering, so scripts and styles still allow
+inline content. It allows `unsafe-eval` only in development and adds monitoring
+or analytics origins only when their public configuration exists. Projects that
+need nonce-based CSP must accept dynamic rendering as described in the
+[Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy).
 
-- CSP endpoints and use of `unsafe-inline` or `unsafe-eval`;
-- HSTS preload;
-- image host allowlists.
+Production sends one year of HSTS without `includeSubDomains` or `preload`.
+Enable those directives only after every subdomain is HTTPS-only and the domain
+owner accepts the preload removal delay. Review the image host allowlist before
+deployment.
 
 ## Cross-cutting modules
 

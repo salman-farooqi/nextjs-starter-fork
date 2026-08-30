@@ -1,6 +1,12 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+function getConfiguredOrigin(value: string | undefined): string | undefined {
+  if (!value || !URL.canParse(value)) return undefined;
+
+  return new URL(value).origin;
+}
+
 const nextConfig: NextConfig = {
   typedRoutes: true,
   experimental: {
@@ -31,6 +37,12 @@ const nextConfig: NextConfig = {
     ],
   },
   headers() {
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const sentryOrigin = getConfiguredOrigin(process.env.NEXT_PUBLIC_SENTRY_DSN);
+    const hasClientAnalytics = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GTM_ID);
+    const scriptSources = ["script-src", "'self'", "'unsafe-inline'", ...(isDevelopment ? ["'unsafe-eval'"] : []), ...(hasClientAnalytics ? ["https://www.googletagmanager.com"] : [])].join(" ");
+    const connectionSources = ["connect-src", "'self'", ...(sentryOrigin ? [sentryOrigin] : []), ...(hasClientAnalytics ? ["https://*.google-analytics.com", "https://analytics.google.com"] : [])].join(" ");
+
     return [
       {
         source: "/(.*)",
@@ -53,15 +65,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.sentry.io https://js.sentry-cdn.com",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              "connect-src 'self' https://*.sentry.io https://*.google-analytics.com https://analytics.google.com",
-              "frame-ancestors 'none'",
-            ].join("; "),
+            value: ["default-src 'self'", scriptSources, "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob: https:", "font-src 'self' data:", connectionSources, "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"].join("; "),
           },
         ],
       },
@@ -89,7 +93,7 @@ const nextConfig: NextConfig = {
               headers: [
                 {
                   key: "Strict-Transport-Security",
-                  value: "max-age=31536000; includeSubDomains; preload",
+                  value: "max-age=31536000",
                 },
               ],
             },

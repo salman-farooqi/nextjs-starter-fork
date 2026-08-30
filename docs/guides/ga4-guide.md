@@ -28,6 +28,9 @@ GA_API_SECRET=
 Client tracking needs a measurement ID and a loaded `gtag` function. Server
 tracking also needs `GA_API_SECRET`. Keep the secret on the server.
 
+The CSP permits Google Tag Manager and Analytics browser origins only when a
+public GA or GTM ID is configured. It does not load either provider script.
+
 ## Consent comes first
 
 `hasAnalyticsConsent()` currently returns `true`. Replace it with the project's

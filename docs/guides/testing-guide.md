@@ -20,7 +20,8 @@ The current suite covers:
 - example mutation rejection before authentication exists;
 - form schema trimming and database-length limits;
 - error-code to HTTP-status mapping;
-- transient network error detection.
+- transient network error detection;
+- production and development security-header policy.
 
 ## Test selection
 

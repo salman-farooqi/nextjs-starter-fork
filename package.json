@@ -32,7 +32,7 @@
     "prepare": "husky",
     "type-check": "next typegen && tsc --noEmit",
     "validate": "bun run lint && bun run type-check && bun run test",
-    "ci": "bun run validate && bun run build && bun audit --audit-level high"
+    "ci": "bun run validate && NODE_ENV=production bun run build && bun audit --audit-level high"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

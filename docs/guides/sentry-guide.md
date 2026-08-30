@@ -29,6 +29,9 @@ The DSN enables event delivery. The auth token, organization, and project enable
 the build-time Sentry wrapper and source-map upload. Store the auth token only in
 CI or the deployment platform.
 
+The CSP permits Sentry browser ingestion only when `NEXT_PUBLIC_SENTRY_DSN` is
+configured.
+
 Current traces sampling is `1.0` outside production and `0.15` in production.
 Set a rate based on traffic and cost before launch. Profiles are disabled.
 
