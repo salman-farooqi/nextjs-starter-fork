@@ -170,7 +170,7 @@ Export CI variables to prevent interactive prompts:
 export CI=true DEBIAN_FRONTEND=noninteractive GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never HOMEBREW_NO_AUTO_UPDATE=1 GIT_EDITOR=: EDITOR=: VISUAL='' GIT_SEQUENCE_EDITOR=: GIT_MERGE_AUTOEDIT=no GIT_PAGER=cat PAGER=cat npm_config_yes=true PIP_NO_INPUT=1 YARN_ENABLE_IMMUTABLE_INSTALLS=false
 ```
 
-Then verify: `bun run lint` (zero errors), `bun run type-check` (zero errors), review the log.
+Then run `bun run ci` and review the complete validation log.
 
 ## ⚠️ ZERO-TOLERANCE: LINT & TYPE ERRORS — FIX IMMEDIATELY
 
@@ -213,7 +213,8 @@ bun run db:push      # Push schema to DB (dev only)
 
 ## CI / Git Hooks
 
-- CI (GitHub Actions) runs `bun run lint` and `bun run type-check`.
+- CI installs the frozen lockfile, then runs lint, type-check, tests, a
+  production build, and a high-severity dependency audit.
 - Husky hooks:
   - pre-commit: runs Biome format on staged files.
   - pre-push: runs `bun lint` (Biome check).
@@ -589,14 +590,13 @@ Every single change MUST pass ALL validation gates before being committed or pus
 
 ```bash
 bun run format   # Biome format — fixes formatting automatically
-bun run lint     # Biome check — must show "No fixes applied" (exit 0)
-bun run type-check  # tsc — must pass with zero errors
+bun run ci       # lint, type-check, tests, production build, and audit
 ```
 
 **Rules:**
 - `bun run format` is NOT optional. Run it before every commit or use `git add` + husky pre-commit.
-- `bun run lint` must exit with code 0. If it fails, fix ALL issues — never bypass.
-- `bun run type-check` must exit with code 0. No `@ts-ignore`, `@ts-expect-error`, or `as any` allowed.
+- `bun run ci` must exit with code 0. If it fails, fix ALL issues — never bypass.
+- Type-checking must pass without `@ts-ignore`, `@ts-expect-error`, or `as any`.
 - Treat lint warnings as errors — fix them, don't ignore them.
 - If CI would fail the change, the commit is not ready.
 
@@ -609,7 +609,9 @@ The pre-push hook runs `bun run lint` (biome check). **This is non-negotiable.**
 
 ### Gate 3 — CI (GitHub Actions)
 
-CI runs `bun run lint` + `bun run type-check`. PRs that fail CI must not be merged.
+CI installs the frozen lockfile, then runs lint, type-check, tests, a production
+build, and a high-severity dependency audit. PRs that fail CI must not be
+merged.
 - Local validation must match CI validation exactly — no divergence allowed.
 
 ### Auto-Generated Files
@@ -628,7 +630,7 @@ Drizzle Kit migration files (`src/db/migrations/*.sql`, `src/db/migrations/meta/
 | 4 | All constants must be in `src/lib/constants.ts` | Architectural violation |
 | 5 | NEVER run `db:push`, `db:migrate`, or `db:generate` without explicit user permission | Data loss risk — hard block |
 | 6 | NEVER suppress type errors with `as any`, `@ts-ignore`, `@ts-expect-error` | TypeScript strict mode violation |
-| 7 | NEVER commit if `bun run lint` or `bun run type-check` fails | CI will fail anyway |
+| 7 | NEVER commit if `bun run ci` fails | CI will fail anyway |
 | 8 | NEVER use `git push --no-verify` to bypass hooks | Bypasses quality gates |
 | 9 | NEVER use `throw` in catch blocks — always return `Result` | Pattern violation |
 | 10 | NEVER mix API Route methods (GET only for reads, Server Actions for mutations) | Architecture violation |
@@ -697,7 +699,11 @@ Drizzle Kit migration files (`src/db/migrations/*.sql`, `src/db/migrations/meta/
 - src/db/index.ts
 - src/dal/*.ts
 - src/services/*.ts
-- src/actions/*.ts (also "use server" directive)
+- `src/actions/*.ts` use the `server-only` guard.
+- Modules that directly export callable Server Actions also use the
+  `"use server"` directive. Factories and synchronous support modules, such as
+  `action-base.ts`, must not use it because Next.js requires every export from
+  a `"use server"` module to be asynchronous.
 
 ## Documentation
 
@@ -720,7 +726,7 @@ When `gh pr create` is explicitly permitted, every PR MUST include:
 - **Type of Change**: Bug fix, feature, breaking change, or refactor.
 - **How Has This Been Tested**: Step-by-step verification instructions.
 - **Visuals**: Screenshots for any UI changes.
-- Every PR MUST pass `bun run lint` and `bun run type-check` before opening.
+- Every PR MUST pass `bun run ci` before opening.
 
 ### Using the PR Template
 

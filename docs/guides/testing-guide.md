@@ -50,15 +50,14 @@ This project uses **Vitest** with `globals: true`:
 
 ```typescript
 // vitest.config.ts
-import { defineConfig } from "vitest/config";
 import path from "path";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     environment: "node",
     globals: true,
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
-    setupFiles: ["./src/__tests__/setup.ts"],
   },
   resolve: {
     alias: {
@@ -74,16 +73,17 @@ Tests mirror the source directory:
 
 ```
 src/__tests__/
+├── actions/
+│   └── action-base.test.ts
 ├── lib/
 │   ├── errors.test.ts
-│   └── utils.test.ts
+│   └── examples-schema.test.ts
 ├── services/
 │   └── example.test.ts
 ├── components/
 │   └── ExampleComponent.test.tsx
 ├── mocks/
 │   └── server-only.ts
-├── setup.ts
 └── helpers.ts
 ```
 
@@ -426,34 +426,3 @@ test("navigation links work correctly", async ({ page }) => {
 | `src/lib/guards.ts` | 90%+ |
 | `src/services/*.ts` | 70%+ |
 | Key components | 70%+ |
-
----
-
-## Implementation Roadmap
-
-### Phase 1 — Infrastructure & Utilities
-
-| Task | Effort |
-|------|--------|
-| Configure Vitest (jsdom for components) | 1h |
-| Create `src/__tests__/setup.ts` | 30m |
-| Create `src/__tests__/mocks/server-only.ts` | 15m |
-| Write `lib/errors.test.ts` (5 tests) | 1h |
-| Write `lib/utils.test.ts` (5 tests) | 1h |
-| Write `lib/retry.test.ts` (3 tests) | 30m |
-| Write `lib/guards.test.ts` (3 tests) | 30m |
-
-### Phase 2 — Services & Components (HIGHEST PRIORITY)
-
-| Task | Tests | Effort |
-|------|-------|--------|
-| Service tests (success + error paths) | 10 | 3h |
-| Component tests (render, empty, error states) | 15 | 5h |
-
-### Phase 3 — E2E (One per Critical Journey)
-
-| Task | Tests | Effort |
-|------|-------|--------|
-| Homepage loads correctly | 1 | 1h |
-| Navigation flow | 1 | 1h |
-| Critical form/action flow | 1 | 2h |

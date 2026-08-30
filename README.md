@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwind-css)](https://tailwindcss.com/)
-[![Bun](https://img.shields.io/badge/Bun-Latest-f472b6?logo=bun)](https://bun.sh/)
+[![Bun](https://img.shields.io/badge/Bun-1.4.0-f472b6?logo=bun)](https://bun.sh/)
 
 ## 📋 Table of Contents
 
@@ -27,7 +27,9 @@
 
 ## 🎯 Why This Template?
 
-This isn't just another Next.js starter. It's a **battle-tested, production-ready foundation** that saves you hours of setup time and enforces best practices from day one.
+This is an opinionated starting point for production Next.js applications. It
+provides strict defaults and example boundaries that each project should adapt
+to its own domain and authentication model.
 
 **What makes it different:**
 
@@ -36,7 +38,7 @@ This isn't just another Next.js starter. It's a **battle-tested, production-read
 - ✅ **Strict naming conventions** (Interfaces: `IUser`, Types: `TApiResponse`)
 - ✅ **Pre-configured utilities** (type-safe API fetcher, storage helpers)
 - ✅ **Automated code quality** (Biome + Husky hooks)
-- ✅ **CI/CD ready** (GitHub Actions with lint + type-check)
+- ✅ **CI/CD ready** (locked install, lint, type-check, tests, build, and audit)
 - ✅ **Modern stack** (Next.js 16, React 19, Tailwind v4, Bun)
 - ✅ **DAL layering examples** (DB → DAL → Services → Actions/API)
 - ✅ **shadcn/ui integration** with New York style variants
@@ -127,14 +129,13 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 nextjs-starter/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml              # CI/CD pipeline (lint + type-check)
+│       └── ci.yml              # CI quality and production-build gates
 ├── .husky/
 │   ├── pre-commit              # Auto-format staged files
 │   └── pre-push                # Lint before push
-├── public/                     # Static assets
-│   ├── *.svg                   # SVG icons and images
-│   └── ...
+├── public/                     # Project-owned static assets
 ├── src/
+│   ├── __tests__/              # Tests mirroring source directories
 │   ├── app/                    # Next.js App Router
 │   │   ├── globals.css        # Global styles + Tailwind imports
 │   │   ├── layout.tsx         # Root layout component
@@ -171,7 +172,6 @@ nextjs-starter/
 │   ├── services/             # Business logic layer
 │   │   └── example-service.ts
 │   └── lib/                  # Core utilities & configuration
-│       ├── config.ts         # Environment validation (Zod + T3 Env)
 │       ├── env.ts            # Environment schema (createEnv)
 │       ├── constants.ts      # App constants (HTTP_VERBS, etc.)
 │       ├── enums.ts          # Shared enums (ErrorCode)
@@ -228,7 +228,7 @@ components/app/
 
 ### 1. Type-Safe Environment Variables
 
-**File:** `src/lib/config.ts`
+**File:** `src/lib/env.ts`
 
 ```typescript
 import { createEnv } from "@t3-oss/env-core";
@@ -236,11 +236,14 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().url().optional(),
+    DATABASE_URL: z.string().url(),
     PORT: z.coerce.number().default(3000),
-    NODE_ENV: z.enum(["production", "development"]).default("development"),
+    NODE_ENV: z
+      .enum(["production", "development", "test"])
+      .default("development"),
   },
   client: {
+    NEXT_PUBLIC_SITE_URL: z.string().url(),
     NEXT_PUBLIC_API_BASE_URL: z.string().url().default("http://localhost:3000"),
   },
   runtimeEnv: process.env,
@@ -248,7 +251,7 @@ export const env = createEnv({
 });
 
 // Usage:
-// import { env } from "@/lib/config";
+// import { env } from "@/lib/env";
 // const apiUrl = env.NEXT_PUBLIC_API_BASE_URL;
 ```
 
@@ -402,8 +405,11 @@ export default function Page() {
 | **build** | `bun build` | Create production build |
 | **start** | `bun start` | Start production server |
 | **lint** | `bun lint` | Run Biome checks |
-| **type-check** | `bun type-check` | Run TypeScript type checking |
+| **type-check** | `bun type-check` | Generate Next route types and run TypeScript |
 | **format** | `bun format` | Format code with Biome |
+| **test** | `bun test` | Run the Vitest suite once |
+| **validate** | `bun run validate` | Run lint, type-check, and tests |
+| **ci** | `bun run ci` | Run validation, production build, and dependency audit |
 | **db:generate** | `bun run db:generate` | Generate migrations |
 | **db:migrate** | `bun run db:migrate` | Run migrations |
 | **db:push** | `bun run db:push` | Push schema to database |
@@ -419,6 +425,7 @@ bun dev
 # Check for issues before committing
 bun lint
 bun type-check
+bun test
 
 # Format code manually (auto-runs on git commit)
 bun format
@@ -431,30 +438,32 @@ Create a `.env` file in the root directory:
 ```env
 # Server-side only (NOT exposed to browser)
 DATABASE_URL=postgres://YOUR_USERNAME:YOUR_PASSWORD@localhost:5432/app_db
+DATABASE_POOL_SIZE=10
 PORT=3000
 NODE_ENV=development
 
 # Client-side (exposed to browser, must use NEXT_PUBLIC_ prefix)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 ```
 
 **Important:**
 - ✅ Server variables are only accessible in Server Components and API routes
 - ✅ Client variables (prefixed with `NEXT_PUBLIC_`) are bundled and exposed to the browser
-- ✅ All variables are validated at build time using Zod schemas in `src/lib/config.ts`
+- ✅ All variables are validated at build time using Zod schemas in `src/lib/env.ts`
 - ✅ Missing or invalid variables will cause build failures with clear error messages
 
 **Adding new variables:**
 
 1. Update `.env` and `.env.example`
-2. Add validation schema in `src/lib/config.ts`
+2. Add the validation schema in `src/lib/env.ts`
 3. Restart the dev server
 
 ```typescript
-// src/lib/config.ts
+// src/lib/env.ts
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().url(), // Add this
+    DATABASE_URL: z.string().url(),
   },
   client: {
     NEXT_PUBLIC_FEATURE_FLAG: z.boolean(), // Add this
@@ -507,15 +516,17 @@ Biome enforces recommended rules. We also follow naming conventions:
 **File:** `.github/workflows/ci.yml`
 
 **Triggers:**
-- Pull requests to `main` and `dev` branches
+- Pull requests and pushes to `main` and `dev`
 
 **Steps:**
 1. Checkout code
-2. Setup Node.js 20
-3. Install Bun
-4. Install dependencies (`bun install`)
-5. Run linting (`bun lint`)
-6. Run type checking (`bun type-check`)
+2. Set up the Bun version pinned in `package.json`
+3. Install the frozen lockfile (`bun ci`)
+4. Run linting (`bun run lint`)
+5. Generate route types and run TypeScript (`bun run type-check`)
+6. Run tests (`bun run test`)
+7. Build the production application (`bun run build`)
+8. Fail on high-severity dependency advisories
 
 **Benefits:**
 - ✅ Automated code quality checks
@@ -653,7 +664,7 @@ bunx husky install
 
 Future enhancements planned for this template:
 
-- [ ] **Testing Setup** - Vitest + React Testing Library
+- [~] **Testing Setup** - Vitest behavior tests are active; component test tooling is pending
 - [x] **API Route Examples** - REST API patterns
 - [x] **Server Actions Examples** - Next.js server actions
 - [x] **Database Integration** - Drizzle ORM setup

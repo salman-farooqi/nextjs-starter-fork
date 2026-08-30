@@ -302,7 +302,7 @@ The template includes a comprehensive SEO/AEO system designed for both tradition
 
 | Environment | Env File | Env Sourcing | Notes |
 |-------------|----------|-------------|-------|
-| **Local** | `.env` (not tracked) | Copy from `.env.example` | `bun dev` reads via `env-cmd`; database runs locally or via Docker |
+| **Local** | `.env` (not tracked) | Copy from `.env.example` | Next.js loads local environment files; the database runs locally or via Docker |
 | **Staging** | Project-level env vars in deployment platform | CI/CD injects staging values | Used for preview deployments, integration tests, and UAT |
 | **Production** | Project-level env vars in deployment platform | CI/CD injects production values | Secrets managed through platform UI (Vercel, Railway, etc.) — never in repo |
 

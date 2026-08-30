@@ -15,7 +15,7 @@ bun run dev
 - **Formatter/Linter**: Biome
   - `bun run lint` → `biome check .`
   - `bun run format` → `biome format --write .`
-- **Type-check**: `bun run type-check` (tsc --noEmit)
+- **Type-check**: `bun run type-check` (Next route generation + TypeScript)
 - **Test**: `bun test` (Vitest)
 
 ### Drizzle (database tooling)
@@ -223,8 +223,7 @@ This applies to **ALL** app-level semantic values — see the dedicated section 
 Run before every push:
 
 ```bash
-bun run lint
-bun run type-check
+bun run ci
 ```
 
 ## Testing

@@ -106,23 +106,24 @@ grep -r "nextjs-starter" src/ docs/ *.json *.md
 
 ## Zero-Tolerance: Lint Errors & Type Errors
 
-**All code changes MUST pass `bun run lint` and `bun run type-check` with zero errors and zero warnings before being committed.**
+**All code changes MUST pass `bun run ci` before being committed.**
 
-This is non-negotiable. The CI pipeline enforces both checks, and Husky pre-push hooks run `bun lint`. Any failures block the commit/push.
+This is non-negotiable. CI enforces lint, type-check, tests, a production build,
+and the high-severity audit. Husky still provides a faster lint check before a
+push.
 
 ### Rules
 
 - **No suppression**: Never use `@ts-ignore`, `@ts-expect-error`, `as any`, or Biome `// biome-ignore` comments to silence errors or warnings. Fix the root cause.
 - **No pre-existing excuse**: If you encounter pre-existing errors unrelated to your changes, fix them or document them — never use them as justification for introducing new ones.
 - **Warnings are errors**: Treat lint warnings with the same urgency as errors.
-- **Verify before declaring done**: Every PR, every commit, every task — run both checks and confirm zero output before marking complete.
+- **Verify before declaring done**: Every PR, every commit, every task — run the full CI command and confirm it passes before marking complete.
 
 ### Verification Commands
 
 ```bash
-# Must both exit 0 with no output
-bun run lint
-bun run type-check
+# Must exit 0
+bun run ci
 ```
 
 ### What to Do When Checks Fail
@@ -135,8 +136,7 @@ bun run type-check
 
 Before committing any metadata changes:
 
-- [ ] `bun run type-check` passes (zero errors, zero warnings)
-- [ ] `bun run lint` passes (zero errors, zero warnings)
+- [ ] `bun run ci` passes
 - [ ] `.env.example` is not committed with real secrets
 - [ ] All related documentation files are updated
 - [ ] Project name is consistent across `package.json`, `README.md`
@@ -148,7 +148,7 @@ Before committing any metadata changes:
 Before deploying to any environment:
 
 - [ ] **Build check** — Run `bun run build` locally and confirm zero errors
-- [ ] **Lint & type check** — Run `bun run lint` and `bun run type-check`; both must pass with zero errors
+- [ ] **Full CI gate** — Run `bun run ci`; lint, type-check, tests, build, and audit must pass
 - [ ] **Environment variables** — Verify ALL env vars are set in the target environment and match `src/lib/env.ts` schema
 - [ ] **Migrations** — If the database schema changed, run `bun run db:generate` and `bun run db:migrate` against the target database
 - [ ] **Sentry** — Confirm `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` is configured for error monitoring in the target environment
