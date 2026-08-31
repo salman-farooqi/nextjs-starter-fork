@@ -182,16 +182,6 @@
     },
     {
       "includes": [
-        "**/next.config.ts",
-        "**/next.config.mjs",
-        "**/redirects.mjs"
-      ],
-      "formatter": {
-        "lineWidth": 320
-      }
-    },
-    {
-      "includes": [
         "**/vitest.config.ts",
         "**/src/lib/constants.ts",
         "**/src/lib/config.ts",

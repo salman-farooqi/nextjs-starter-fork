@@ -10,7 +10,15 @@ function getConfiguredOrigin(value: string | undefined): string | undefined {
 const nextConfig: NextConfig = {
   typedRoutes: true,
   experimental: {
-    optimizePackageImports: ["lucide-react", "date-fns", "@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select", "@radix-ui/react-tabs", "@radix-ui/react-popover"],
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-popover",
+    ],
     serverActions: {
       bodySizeLimit: "2mb",
     },
@@ -21,27 +29,38 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 2_592_000, // 30 days
     deviceSizes: [640, 768, 1024, 1280, 1536],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.cloudinary.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.supabase.co",
-      },
-    ],
   },
   headers() {
     const isDevelopment = process.env.NODE_ENV === "development";
-    const sentryOrigin = getConfiguredOrigin(process.env.NEXT_PUBLIC_SENTRY_DSN);
-    const hasClientAnalytics = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GTM_ID);
-    const scriptSources = ["script-src", "'self'", "'unsafe-inline'", ...(isDevelopment ? ["'unsafe-eval'"] : []), ...(hasClientAnalytics ? ["https://www.googletagmanager.com"] : [])].join(" ");
-    const connectionSources = ["connect-src", "'self'", ...(sentryOrigin ? [sentryOrigin] : []), ...(hasClientAnalytics ? ["https://*.google-analytics.com", "https://analytics.google.com"] : [])].join(" ");
+    const sentryOrigin = getConfiguredOrigin(
+      process.env.NEXT_PUBLIC_SENTRY_DSN,
+    );
+    const hasClientAnalytics = Boolean(
+      process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ||
+        process.env.NEXT_PUBLIC_GTM_ID,
+    );
+    const scriptSources = [
+      "script-src",
+      "'self'",
+      "'unsafe-inline'",
+      ...(isDevelopment ? ["'unsafe-eval'"] : []),
+      ...(hasClientAnalytics ? ["https://www.googletagmanager.com"] : []),
+    ].join(" ");
+    const connectionSources = [
+      "connect-src",
+      "'self'",
+      ...(sentryOrigin ? [sentryOrigin] : []),
+      ...(hasClientAnalytics
+        ? ["https://*.google-analytics.com", "https://analytics.google.com"]
+        : []),
+    ].join(" ");
+    const imageSources = [
+      "img-src",
+      "'self'",
+      "data:",
+      "blob:",
+      ...(hasClientAnalytics ? ["https://*.google-analytics.com"] : []),
+    ].join(" ");
 
     return [
       {
@@ -61,11 +80,27 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: ["camera=()", "display-capture=()", "geolocation=()", "microphone=()"].join(", "),
+            value: [
+              "camera=()",
+              "display-capture=()",
+              "geolocation=()",
+              "microphone=()",
+            ].join(", "),
           },
           {
             key: "Content-Security-Policy",
-            value: ["default-src 'self'", scriptSources, "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob: https:", "font-src 'self' data:", connectionSources, "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"].join("; "),
+            value: [
+              "default-src 'self'",
+              scriptSources,
+              "style-src 'self' 'unsafe-inline'",
+              imageSources,
+              "font-src 'self' data:",
+              connectionSources,
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+            ].join("; "),
           },
         ],
       },
@@ -112,9 +147,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-const shouldEnableSentry = Boolean(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT);
+const shouldEnableSentry = Boolean(
+  process.env.SENTRY_AUTH_TOKEN &&
+    process.env.SENTRY_ORG &&
+    process.env.SENTRY_PROJECT,
+);
 
-const isProductionDeployment = process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+const isProductionDeployment =
+  process.env.VERCEL_ENV === "production" ||
+  process.env.NODE_ENV === "production";
 
 const sentryConfig = {
   disableLogger: true,
@@ -122,6 +163,8 @@ const sentryConfig = {
   hideSourceMaps: isProductionDeployment,
 };
 
-const exportConfig = shouldEnableSentry ? withSentryConfig(nextConfig, sentryConfig) : nextConfig;
+const exportConfig = shouldEnableSentry
+  ? withSentryConfig(nextConfig, sentryConfig)
+  : nextConfig;
 
 export default exportConfig;

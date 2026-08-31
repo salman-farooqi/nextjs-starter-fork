@@ -60,6 +60,20 @@ describe("security headers", function securityHeaderTests() {
     expect(contentSecurityPolicy).not.toContain("analytics.google.com");
   });
 
+  it("does not allow arbitrary remote images", async function remoteImageTest() {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_GA_MEASUREMENT_ID", "");
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", "");
+
+    const headers = await getGlobalHeaders();
+    const contentSecurityPolicy = headers.get("Content-Security-Policy");
+
+    expect(contentSecurityPolicy).toContain("img-src 'self' data: blob:");
+    expect(contentSecurityPolicy).not.toContain(
+      "img-src 'self' data: blob: https:",
+    );
+  });
+
   it("allows explicitly configured monitoring and analytics providers", async function configuredProviderTest() {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv(
@@ -76,6 +90,9 @@ describe("security headers", function securityHeaderTests() {
     expect(contentSecurityPolicy).toContain("https://www.googletagmanager.com");
     expect(contentSecurityPolicy).toContain("https://*.google-analytics.com");
     expect(contentSecurityPolicy).toContain("https://analytics.google.com");
+    expect(contentSecurityPolicy).toContain(
+      "img-src 'self' data: blob: https://*.google-analytics.com",
+    );
   });
 
   it("uses development-only script and transport settings", async function developmentPolicyTest() {

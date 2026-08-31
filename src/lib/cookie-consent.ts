@@ -1,3 +1,3 @@
 export function hasAnalyticsConsent(): boolean {
-  return true;
+  return false;
 }

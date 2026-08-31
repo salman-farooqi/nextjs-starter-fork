@@ -6,14 +6,14 @@ without evidence adds work and can make the bundle worse.
 ## Existing defaults
 
 `next.config.ts` enables typed routes, removes the powered-by header, configures
-AVIF and WebP, and defines image sizes and remote hosts. It also asks Next to
-optimize imports from several UI packages.
+AVIF and WebP, and defines image sizes. It also asks Next to optimize imports
+from several UI packages.
 
 `next/font` loads Geist in `src/app/layout.tsx`. Tailwind and the motion styles
 live in `src/app/globals.css`.
 
-Review the image host list for each project. A broad wildcard grants the app
-permission to optimize content from every matching host.
+Remote images are disabled by default. Add only the exact hosts a project owns
+or trusts, and keep the CSP image sources in sync.
 
 ## Server and client boundaries
 

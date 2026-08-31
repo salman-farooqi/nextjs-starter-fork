@@ -33,8 +33,8 @@ public GA or GTM ID is configured. It does not load either provider script.
 
 ## Consent comes first
 
-`hasAnalyticsConsent()` currently returns `true`. Replace it with the project's
-real consent state before enabling analytics. The decision must be available
+`hasAnalyticsConsent()` returns `false` until a project replaces it with a real
+consent decision. Keep that fail-closed behavior until consent is available
 before the app loads provider scripts or sends events.
 
 Consent requirements depend on the product, region, and data collected. Record
