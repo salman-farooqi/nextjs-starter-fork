@@ -12,20 +12,8 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: [
-      "e2e/**",
-      "src/__tests__/integration/**",
-      "**/node_modules/**",
-      ".next/**",
-    ],
+    include: ["src/__tests__/integration/**/*.test.ts"],
     environment: "node",
-    env: {
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/app",
-      NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
-    },
-    globals: true,
-    sequence: { hooks: "stack" },
-    maxConcurrency: 1,
     fileParallelism: false,
     clearMocks: true,
     restoreMocks: true,

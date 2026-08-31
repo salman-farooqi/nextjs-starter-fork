@@ -10,9 +10,13 @@ Vitest runs in Node with the `@/` alias. `vitest.config.ts` replaces the
 
 ```bash
 bun run test
+bun run test:integration
 bun run test:watch
 bun run test:coverage
 ```
+
+The integration command requires a PostgreSQL database with the repository
+migrations already applied. Unit tests do not require a running database.
 
 The current suite covers:
 
@@ -21,7 +25,10 @@ The current suite covers:
 - form schema trimming and database-length limits;
 - error-code to HTTP-status mapping;
 - transient network error detection;
-- production and development security-header policy.
+- fail-closed analytics consent;
+- production and development security-header policy;
+- public crawler, agent-index, and structured-data contracts;
+- baseline migration behavior against PostgreSQL.
 
 ## Test selection
 
@@ -64,13 +71,14 @@ Drizzle schema.
 
 ## Database tests
 
-Add Testcontainers when the first real project depends on repository queries or
-constraints. Run migrations against a fresh PostgreSQL container, seed only the
-records needed by the test, and clean up the container after the suite.
+Pull-request CI starts a disposable PostgreSQL service, applies the migration
+history, and runs `bun run test:integration`. The baseline test performs one raw
+SQL round trip through the migrated `examples` table. Raw SQL keeps this check
+independent from the Drizzle schema that generated the migration.
 
-Do not add Testcontainers to this generic starter solely to exercise the
-placeholder examples table. The Docker requirement is worth it when a project
-has real query behavior to protect.
+Add database tests for constraints and query behavior that can fail in
+PostgreSQL but not in a unit test. Keep their data isolated and avoid duplicating
+service-policy tests at the SQL layer.
 
 ## Browser tests
 
@@ -108,4 +116,5 @@ request is unnecessary for the current sample domain.
 - [Playwright best practices](https://playwright.dev/docs/best-practices)
 - [Google: do not overuse mocks](https://testing.googleblog.com/2013/05/testing-on-toilet-dont-overuse-mocks.html)
 - [The practical test pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
-- [Testcontainers for Node.js](https://node.testcontainers.org/)
+- [GitHub Actions PostgreSQL service containers](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers)
+- [Drizzle migration generation](https://orm.drizzle.team/docs/drizzle-kit-generate)

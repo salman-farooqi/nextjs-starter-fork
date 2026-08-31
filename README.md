@@ -10,7 +10,7 @@ privacy, content, or deployment policy.
 - Tailwind CSS 4 and shadcn/ui
 - PostgreSQL with Drizzle ORM
 - Zod validation and `neverthrow` results
-- Optional Sentry, GA4, and SEO helpers
+- Optional Sentry, GA4, SEO, and AI-discovery helpers
 - Biome, Vitest, Husky, GitHub Actions, and Bun
 
 The example feature demonstrates the repository's data flow. Rename or remove
@@ -23,6 +23,7 @@ Install Bun 1.4 or newer and provide a disposable PostgreSQL database.
 ```bash
 cp .env.example .env.local
 bun install
+bun run db:migrate
 bun run dev
 ```
 
@@ -34,6 +35,9 @@ bun run ci
 
 The remaining scripts are declared in [`package.json`](package.json). Database
 scripts can change schema or data; verify the target before running one.
+
+Pull-request CI also starts an empty PostgreSQL service, applies every migration,
+and runs the database integration test.
 
 ## Before the first deployment
 

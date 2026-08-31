@@ -25,6 +25,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,6 +58,12 @@ jobs:
 
       - name: Run tests
         run: bun run test
+
+      - name: Apply database migrations
+        run: bun run db:migrate
+
+      - name: Run database integration test
+        run: bun run test:integration
 
       - name: Build production application
         run: bun run build

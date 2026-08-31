@@ -52,6 +52,8 @@ rules stay in services.
 
 `src/db/schema.ts` is the Drizzle schema used by Drizzle Kit. `src/db/index.ts`
 creates the shared Postgres client from validated environment values.
+`src/db/migrations/` contains the reviewed migration history applied by CI and
+deployments.
 
 DAL modules live in `src/dal/` and are server-only. Name them for the domain,
 such as `examples.ts`. Every query should:
@@ -132,8 +134,9 @@ need nonce-based CSP must accept dynamic rendering as described in the
 
 Production sends one year of HSTS without `includeSubDomains` or `preload`.
 Enable those directives only after every subdomain is HTTPS-only and the domain
-owner accepts the preload removal delay. Review the image host allowlist before
-deployment.
+owner accepts the preload removal delay. Optimized images and the default CSP
+allow local assets only. Add each required remote image origin to both
+`next.config.ts` and the CSP after the project chooses its media providers.
 
 ## Cross-cutting modules
 
