@@ -25,6 +25,7 @@ export const ACTION_MESSAGES = {
 export const HTTP_CONTENT_TYPE = {
   JSON: "application/json",
   HTML: "text/html",
+  MARKDOWN: "text/markdown",
   TEXT: "text/plain",
   XML: "application/xml",
   FORM: "application/x-www-form-urlencoded",
@@ -41,8 +42,9 @@ export const CORS_HEADERS = {
 // ─── SEO ───────────────────────────────────────────────────────────────────
 
 export const DEFAULT_SEO = {
-  siteName: "Nextjs Starter",
-  titleSuffix: " | Nextjs Starter",
+  siteName: "Next.js Starter",
+  description: "A reusable base for full-stack Next.js projects.",
+  titleSuffix: " | Next.js Starter",
   twitterHandle: "",
   locale: "en_US",
 } as const;
@@ -55,37 +57,22 @@ export const SOCIAL_IMAGE = {
   FORMAT: "image/png",
 } as const;
 
-export const DISALLOWED_ROBOTS_PATHS = [
-  "/api/",
-  "/admin/",
-  "/private/",
-  "/_next/",
-] as const;
-
-// ─── AI Crawlers ───────────────────────────────────────────────────────────
-
-export const AI_CRAWLERS = {
-  SEARCH_AND_CITATION: [
-    "Applebot",
-    "Google-Extended",
-    "PerplexityBot",
-  ] as const,
-  TRAINING: [
-    "CCBot",
-    "GPTBot",
-    "Claude-Web",
-    "anthropic-ai",
-    "cohere-ai",
-  ] as const,
-} as const;
-
-export const SITEMAP_CONFIG = {
-  maxEntries: 50000,
-  priority: {
-    home: 1.0,
-    page: 0.8,
-    post: 0.6,
-    category: 0.5,
+export const AI_CRAWLER_POLICY = {
+  SEARCH: {
+    USER_AGENTS: [
+      "OAI-SearchBot",
+      "PerplexityBot",
+      "Claude-SearchBot",
+    ] as const,
+    ALLOW: true,
+  },
+  TRAINING: {
+    USER_AGENTS: ["GPTBot", "ClaudeBot"] as const,
+    ALLOW: false,
+  },
+  MIXED_USE: {
+    USER_AGENTS: ["Google-Extended", "CCBot"] as const,
+    ALLOW: true,
   },
 } as const;
 
@@ -93,6 +80,9 @@ export const SITEMAP_CONFIG = {
 
 export const ROUTES = {
   HOME: "/",
+  LLMS: "/llms.txt",
+  ROBOTS: "/robots.txt",
+  SITEMAP: "/sitemap.xml",
   API: {
     EXAMPLES: "/api/examples",
     EXAMPLE_BY_ID: (id: number | string) => `/api/examples/${id}`,

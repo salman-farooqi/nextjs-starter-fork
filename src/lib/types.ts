@@ -130,10 +130,6 @@ export interface ISeoConfig {
   noFollow?: boolean;
 }
 
-export interface IJsonLdScript {
-  __html: string;
-}
-
 // ─── SEO Schema Types (JSON-LD) ──────────────────────────────────────────
 
 export interface IBreadcrumbItem {
@@ -141,47 +137,18 @@ export interface IBreadcrumbItem {
   url: string;
 }
 
-export interface IFaqPageItem {
-  question: string;
-  answer: string;
-}
-
-export interface IBlogPostingSchemaConfig {
-  title: string;
-  description: string;
-  url: string;
-  publishedTime: string;
-  author: string;
-  image?: string;
-}
-
-export interface ICollectionPageSchemaConfig {
+export interface IWebsiteSchemaConfig {
   name: string;
   description: string;
   url: string;
-  items: Array<{ name: string; url: string; image?: string }>;
+  alternateName?: string | string[];
 }
 
-export interface IItemListSchemaConfig {
+export interface IOrganizationSchemaConfig {
   name: string;
-  description?: string;
   url: string;
-  items: Array<{ name: string; url: string; image?: string }>;
-}
-
-export interface IVacationRentalSchemaConfig {
-  name: string;
-  description: string;
-  url: string;
-  images: string[];
-  latitude: number;
-  longitude: number;
-  maxOccupancy: number;
-  amenities: string[];
-  petsAllowed?: boolean;
-  checkIn: string;
-  checkOut: string;
-  priceFrom?: number;
+  logoUrl?: string;
+  sameAs?: string[];
 }
 
 export interface IJsonLdProps {

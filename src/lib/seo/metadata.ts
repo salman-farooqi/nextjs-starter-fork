@@ -4,22 +4,14 @@ import type { Metadata } from "next";
 import { env } from "@/lib/config";
 import { DEFAULT_SEO } from "@/lib/constants";
 import type {
-  IBlogPostingSchemaConfig,
-  ICollectionPageSchemaConfig,
-  IItemListSchemaConfig,
-  IJsonLdScript,
+  IOrganizationSchemaConfig,
   ISeoConfig,
-  IVacationRentalSchemaConfig,
+  IWebsiteSchemaConfig,
 } from "@/lib/types";
 
 export function getSiteUrl(): string {
   const url = env.NEXT_PUBLIC_SITE_URL;
   return url.replace(/\/$/u, "");
-}
-
-export function getAbsoluteUrl(path: string): string {
-  const base = getSiteUrl();
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function buildSeoMetadata(config: ISeoConfig): Metadata {
@@ -28,10 +20,12 @@ export function buildSeoMetadata(config: ISeoConfig): Metadata {
     description,
     url,
     image,
+    imageAlt,
     type = "website",
     noIndex,
     noFollow,
     publishedTime,
+    modifiedTime,
     author,
   } = config;
   const fullTitle = title.includes(DEFAULT_SEO.siteName)
@@ -49,8 +43,9 @@ export function buildSeoMetadata(config: ISeoConfig): Metadata {
       type,
       siteName: DEFAULT_SEO.siteName,
       locale: DEFAULT_SEO.locale,
-      ...(image ? { images: [{ url: image }] } : {}),
+      ...(image ? { images: [{ url: image, alt: imageAlt }] } : {}),
       ...(publishedTime ? { publishedTime } : {}),
+      ...(modifiedTime ? { modifiedTime } : {}),
       ...(author ? { authors: [author] } : {}),
     },
     twitter: {
@@ -70,39 +65,6 @@ export function buildSeoMetadata(config: ISeoConfig): Metadata {
   return metadata;
 }
 
-export function generateJsonLd(schema: object): IJsonLdScript {
-  return { __html: JSON.stringify(schema) };
-}
-
-// ─── JSON-LD Structured Data Generators ────────────────────────────────
-
-export function getOrganizationSchema() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: DEFAULT_SEO.siteName,
-    url: getSiteUrl(),
-    logo: `${getSiteUrl()}/logo.png`,
-  } as const;
-}
-
-export function getWebsiteSchema() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: DEFAULT_SEO.siteName,
-    url: getSiteUrl(),
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${getSiteUrl()}/search?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
-  } as const;
-}
-
 export function getBreadcrumbSchema(
   items: Array<{ name: string; url: string }>,
 ) {
@@ -118,114 +80,24 @@ export function getBreadcrumbSchema(
   };
 }
 
-export function getFAQPageSchema(
-  questions: Array<{ question: string; answer: string }>,
-) {
+export function getWebsiteSchema(config: IWebsiteSchemaConfig) {
   return {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: questions.map((q) => ({
-      "@type": "Question",
-      name: q.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: q.answer,
-      },
-    })),
-  };
-}
-
-export function getBlogPostingSchema(config: IBlogPostingSchemaConfig) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: config.title,
-    description: config.description,
-    url: getAbsoluteUrl(config.url),
-    datePublished: config.publishedTime,
-    author: {
-      "@type": "Person",
-      name: config.author,
-    },
-    ...(config.image ? { image: getAbsoluteUrl(config.image) } : {}),
-  };
-}
-
-export function getCollectionPageSchema(config: ICollectionPageSchemaConfig) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
+    "@type": "WebSite",
     name: config.name,
     description: config.description,
-    url: getAbsoluteUrl(config.url),
-    mainEntity: {
-      "@type": "ItemList",
-      itemListElement: config.items.map((item, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        item: {
-          "@type": "Thing",
-          name: item.name,
-          url: item.image ? undefined : getAbsoluteUrl(item.url),
-          ...(item.image ? { image: item.image } : {}),
-        },
-        ...(item.image ? { url: getAbsoluteUrl(item.url) } : {}),
-      })),
-    },
+    url: config.url,
+    ...(config.alternateName ? { alternateName: config.alternateName } : {}),
   };
 }
 
-export function getItemListSchema(config: IItemListSchemaConfig) {
+export function getOrganizationSchema(config: IOrganizationSchemaConfig) {
   return {
     "@context": "https://schema.org",
-    "@type": "ItemList",
+    "@type": "Organization",
     name: config.name,
-    ...(config.description ? { description: config.description } : {}),
-    url: getAbsoluteUrl(config.url),
-    itemListElement: config.items.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      url: getAbsoluteUrl(item.url),
-      ...(item.image ? { image: item.image } : {}),
-    })),
-  };
-}
-
-export function getVacationRentalSchema(config: IVacationRentalSchemaConfig) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "VacationRental",
-    name: config.name,
-    description: config.description,
-    url: getAbsoluteUrl(config.url),
-    image: config.images,
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: config.latitude,
-      longitude: config.longitude,
-    },
-    containsPlace: {
-      "@type": "Accommodation",
-      occupancy: {
-        "@type": "QuantitativeValue",
-        maxValue: config.maxOccupancy,
-      },
-      amenityFeature: config.amenities.map((amenity) => ({
-        "@type": "LocationFeatureSpecification",
-        name: amenity,
-      })),
-    },
-    petsAllowed: config.petsAllowed ?? false,
-    checkinTime: config.checkIn,
-    checkoutTime: config.checkOut,
-    ...(config.priceFrom
-      ? {
-          offers: {
-            "@type": "Offer",
-            price: config.priceFrom,
-            priceCurrency: "EUR",
-          },
-        }
-      : {}),
+    url: config.url,
+    ...(config.logoUrl ? { logo: config.logoUrl } : {}),
+    ...(config.sameAs?.length ? { sameAs: config.sameAs } : {}),
   };
 }

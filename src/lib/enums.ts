@@ -25,18 +25,6 @@ export enum HttpVerb {
   Patch = "PATCH",
 }
 
-// ─── SEO ──────────────────────────────────────────────────────────────────
-
-export enum ChangeFrequency {
-  Always = "always",
-  Hourly = "hourly",
-  Daily = "daily",
-  Weekly = "weekly",
-  Monthly = "monthly",
-  Yearly = "yearly",
-  Never = "never",
-}
-
 // ─── Forms ────────────────────────────────────────────────────────────────
 
 export enum FormStatus {
