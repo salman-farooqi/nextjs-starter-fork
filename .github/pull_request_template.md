@@ -1,33 +1,17 @@
-## Description
+## Why
 
-Context / Ticket: Closes #
+<!-- Link the issue or explain the problem and its impact. -->
 
-<!-- Brief summary of the changes and the problem being solved. -->
+## What changed
 
-## Proposed Changes
+<!-- Describe the behavior changed, not a file-by-file inventory. -->
 
--
--
--
+## Verification
 
-## Type of Change
+- [ ] `bun run ci`
+- Additional evidence:
 
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Refactor
+## Review notes
 
-## How Has This Been Tested?
-
-1. Go to page '...'
-2. Click on '...'
-3. Verify that the output matches '...'
-
-## Visuals (if applicable)
-
-<!-- Add screenshots, GIFs, or recordings for UI changes. -->
-
-## Checklist
-
-- [ ] `bun run lint` passes (zero errors, zero warnings)
-- [ ] `bun run type-check` passes (zero errors)
+<!-- Call out migrations, deployment or security effects, rollback needs, and
+visual evidence. Delete this section when there is nothing to add. -->
