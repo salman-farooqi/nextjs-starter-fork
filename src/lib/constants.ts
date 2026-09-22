@@ -1,5 +1,3 @@
-// ─── HTTP ───────────────────────────────────────────────────────────────────
-
 export const HTTP_STATUS = {
   OK: 200,
   CREATED: 201,
@@ -20,8 +18,6 @@ export const ACTION_MESSAGES = {
   UNEXPECTED_FAILURE_PUBLIC: "Unable to complete the request.",
 } as const;
 
-// ─── Content Types ─────────────────────────────────────────────────────────
-
 export const HTTP_CONTENT_TYPE = {
   JSON: "application/json",
   HTML: "text/html",
@@ -31,15 +27,11 @@ export const HTTP_CONTENT_TYPE = {
   FORM: "application/x-www-form-urlencoded",
 } as const;
 
-// ─── CORS ──────────────────────────────────────────────────────────────────
-
 export const CORS_HEADERS = {
   ORIGIN: "origin",
   METHODS: "access-control-request-method",
   HEADERS: "access-control-request-headers",
 } as const;
-
-// ─── SEO ───────────────────────────────────────────────────────────────────
 
 export const DEFAULT_SEO = {
   siteName: "Next.js Starter",
@@ -48,8 +40,6 @@ export const DEFAULT_SEO = {
   twitterHandle: "",
   locale: "en_US",
 } as const;
-
-// ─── Social Image ─────────────────────────────────────────────────────────
 
 export const SOCIAL_IMAGE = {
   DEFAULT_WIDTH: 1200,
@@ -76,8 +66,6 @@ export const AI_CRAWLER_POLICY = {
   },
 } as const;
 
-// ─── Page Routes (single source of truth) ─────────────────────────────────
-
 export const ROUTES = {
   HOME: "/",
   LLMS: "/llms.txt",
@@ -88,8 +76,6 @@ export const ROUTES = {
     EXAMPLE_BY_ID: (id: number | string) => `/api/examples/${id}`,
   },
 } as const;
-
-// ─── Form Field Names (NEVER hardcode strings) ──────────────────────────
 
 export const FORM_FIELDS = {
   example: {
@@ -106,8 +92,6 @@ export const EXAMPLE_LIMITS = {
   LIST_MAX_SIZE: 100,
 } as const;
 
-// ─── Search Param Keys ────────────────────────────────────────────────────
-
 export const SEARCH_PARAM_KEYS = {
   PAGE: "page",
   LIMIT: "limit",
@@ -115,15 +99,11 @@ export const SEARCH_PARAM_KEYS = {
   SORT: "sort",
 } as const;
 
-// ─── Pagination ───────────────────────────────────────────────────────────
-
 export const PAGINATION = {
   DEFAULT_PAGE_SIZE: 20,
   MAX_PAGE_SIZE: 100,
   DEFAULT_PAGE: 1,
 } as const;
-
-// ─── Duration / TTL ───────────────────────────────────────────────────────
 
 export const DURATION = {
   ONE_MINUTE_MS: 60_000,
@@ -143,8 +123,6 @@ export const ISR_REVALIDATE = {
   ONE_HOUR: 3600,
   ONE_DAY: 86400,
 } as const;
-
-// ─── Analytics ────────────────────────────────────────────────────────────
 
 export const ANALYTICS = {
   DEDUP_WINDOW_MS: 2000,
@@ -171,8 +149,6 @@ export const ANALYTICS = {
   },
 } as const;
 
-// ─── Motion Design Tokens ─────────────────────────────────────────────────
-
 export const MOTION = {
   FAST: "150ms",
   BASE: "300ms",
@@ -182,8 +158,6 @@ export const MOTION = {
   EASE_SPRING: "cubic-bezier(0.34, 1.56, 0.64, 1)",
 } as const;
 
-// ─── Card Styles ───────────────────────────────────────────────────────────
-
 export const CARD_STYLES = {
   BASE: "rounded-lg border bg-card text-card-foreground shadow-sm",
   INTERACTIVE:
@@ -191,12 +165,8 @@ export const CARD_STYLES = {
   STATIC: "rounded-lg border bg-card text-card-foreground",
 } as const;
 
-// ─── Focus Ring ───────────────────────────────────────────────────────────
-
 export const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
-
-// ─── General Purpose ──────────────────────────────────────────────────────
 
 export const ALLOWED_URL_SCHEMES = [
   "http:",

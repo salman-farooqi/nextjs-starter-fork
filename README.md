@@ -1,8 +1,7 @@
 # Next.js starter
 
-A reusable base for full-stack Next.js projects. It provides shared tooling and
-integration points without pretending to know a product's authentication,
-privacy, content, or deployment policy.
+A full-stack Next.js starter with an example data flow and optional integrations.
+Each project chooses its authentication, content and deployment policy.
 
 ## Included
 
@@ -18,16 +17,18 @@ it when the first real domain is introduced.
 
 ## Start locally
 
-Install Bun 1.4 or newer and provide a disposable PostgreSQL database.
+Use the Bun version declared in `package.json` and provide a disposable
+PostgreSQL database.
 
 ```bash
-cp .env.example .env.local
-bun install
-bun run db:migrate
-bun run dev
+bun install --frozen-lockfile
+test -f .env.local || cp .env.example .env.local
 ```
 
-Open `http://localhost:3000`. Run the complete local gate with:
+Set `DATABASE_URL` in `.env.local` to the disposable database. After verifying
+the target, apply the existing migrations with `bun run db:migrate`, then start
+with `bun run dev`. Agents need explicit permission before running database
+commands. Open `http://localhost:3000`. Run the complete local gate with:
 
 ```bash
 bun run ci
@@ -39,10 +40,19 @@ scripts can change schema or data; verify the target before running one.
 Pull-request CI also starts an empty PostgreSQL service, applies every migration,
 and runs the database integration test.
 
+## Start a derived project
+
+Follow [template adoption in CONTRIBUTING.md](CONTRIBUTING.md#template-adoption)
+for branch and tracker setup, then use the
+[project adoption checklist](docs/guides/project-adoption-guide.md) to record the
+brief and replace demo behaviour. Keep product decisions in the derived
+repository. Configure GitHub branch protection separately; template files do
+not enable it.
+
 ## Before the first deployment
 
-Replace the fail-closed action context with a verified server-side session.
-Then review the project-specific security, consent, analytics, monitoring, and
+Before enabling protected mutations, replace the fail-closed action context
+with a verified server-side session. Review the project-specific security, consent, analytics, monitoring, and
 public-content decisions identified in the architecture review and the relevant
 guides below.
 
@@ -53,6 +63,8 @@ guides below.
 | [`docs/architecture.md`](docs/architecture.md) | Module placement, dependency direction, and source conventions |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branch, commit, review, and contribution workflow |
 | [`AGENTS.md`](AGENTS.md) | Agent authorization and repository-specific operating rules |
+| [`docs/guides/quality-guide.md`](docs/guides/quality-guide.md) | Verification gates, lint/CI/hooks, exceptions and review evidence |
+| [`docs/guides/html-report-guide.md`](docs/guides/html-report-guide.md) | Standalone report layout, accessibility and verification |
 | [`docs/guides/testing-guide.md`](docs/guides/testing-guide.md) | Test selection and test-suite policy |
 | [`docs/guides/`](docs/guides) | Error handling, logging, analytics, Sentry, performance, and SEO |
 | [`docs/reports/nextjs-starter-architecture-review.html`](docs/reports/nextjs-starter-architecture-review.html) | Dated audit findings and recommendations |
