@@ -1,5 +1,5 @@
 import type { Result as NeverthrowResult } from "neverthrow";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 
 import type { examples } from "@/db/schema";
 import type { ErrorCode, HttpVerb, LogLevel } from "./enums";
