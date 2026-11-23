@@ -1,16 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { createExampleAction } from "@/actions/examples";
-import { ErrorCode } from "@/lib/enums";
+import { createExampleFormAction } from "@/actions/examples";
 
-describe("createExampleAction", function createExampleActionTests() {
+describe("createExampleFormAction", function createExampleFormActionTests() {
   it("rejects mutations until verified authentication is configured", async function rejectsUnauthenticatedMutation() {
     const formData = new FormData();
 
-    const result = await createExampleAction(formData);
+    const result = await createExampleFormAction(undefined, formData);
 
-    expect(result).toMatchObject({
-      error: { code: ErrorCode.Unauthorized },
-    });
+    expect(result).toEqual({ success: false, error: "Login required." });
   });
 });

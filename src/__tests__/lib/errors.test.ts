@@ -1,18 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { HTTP_STATUS } from "@/lib/constants";
 import { ErrorCode } from "@/lib/enums";
 import { hasTransientNetworkCode, mapErrorStatus } from "@/lib/errors";
 
 describe("mapErrorStatus", function mapErrorStatusTests() {
   it.each([
-    [ErrorCode.Unauthorized, HTTP_STATUS.UNAUTHORIZED],
-    [ErrorCode.Forbidden, HTTP_STATUS.FORBIDDEN],
-    [ErrorCode.NotFound, HTTP_STATUS.NOT_FOUND],
-    [ErrorCode.Conflict, HTTP_STATUS.CONFLICT],
-    [ErrorCode.ValidationError, HTTP_STATUS.UNPROCESSABLE],
-    [ErrorCode.TooManyRequests, HTTP_STATUS.TOO_MANY_REQUESTS],
-    [ErrorCode.DatabaseError, HTTP_STATUS.INTERNAL_ERROR],
+    [ErrorCode.Unauthorized, 401],
+    [ErrorCode.Forbidden, 403],
+    [ErrorCode.NotFound, 404],
+    [ErrorCode.Conflict, 409],
+    [ErrorCode.ValidationError, 422],
+    [ErrorCode.TooManyRequests, 429],
+    [ErrorCode.DatabaseError, 500],
   ])("maps %s to %i", function mapsErrorCode(code, expectedStatus) {
     expect(mapErrorStatus(code)).toBe(expectedStatus);
   });

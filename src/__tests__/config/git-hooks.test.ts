@@ -40,9 +40,6 @@ describe("Git hook safeguards", () => {
       '#!/bin/sh\nif [ "$2" = lint ]; then exit "$TEST_LINT_EXIT"; fi\nexit 0\n',
       { mode: 0o755 },
     );
-    writeFileSync(path.join(checkout, "bunx"), "#!/bin/sh\nexit 0\n", {
-      mode: 0o755,
-    });
   });
 
   afterEach(() => {
