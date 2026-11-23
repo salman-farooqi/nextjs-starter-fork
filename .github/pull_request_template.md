@@ -1,7 +1,7 @@
 ## Summary
 
 <!-- Explain the problem and resulting behavior. Include an approach or tradeoff
-only when it helps review. Follow CONTRIBUTING.md; remove unused sections. -->
+only when it helps review. Remove unused sections. -->
 
 <!-- Use Refs #number by default. Closing keywords require explicit closure
 authorization. Identify dependencies or partial acceptance when applicable. -->

@@ -1,73 +1,39 @@
 # Next.js starter
 
-A full-stack Next.js starter with an example data flow and optional integrations.
-Each project chooses its authentication, content and deployment policy.
+A Next.js application starter with a sample data flow and optional integrations.
+Shared engineering workflows live in the team's installed skills, outside this
+repository. Start new-project delivery with `truedevs-project-delivery`.
+It selects the relevant specialist skills and verifies the resulting application.
 
-## Included
+## Local setup
 
-- Next.js 16, React 19, strict TypeScript, and typed routes
-- Tailwind CSS 4 and shadcn/ui
-- PostgreSQL with Drizzle ORM
-- Zod validation and `neverthrow` results
-- Optional Sentry, GA4, SEO, and AI-discovery helpers
-- Biome, Vitest, Husky, GitHub Actions, and Bun
+Use the Bun version declared in `package.json`.
 
-The example feature demonstrates the repository's data flow. Rename or remove
-it when the first real domain is introduced.
-
-## Start locally
-
-Use the Bun version declared in `package.json` and provide a disposable
-PostgreSQL database.
-
-```bash
+```sh
 bun install --frozen-lockfile
 test -f .env.local || cp .env.example .env.local
 ```
 
-Set `DATABASE_URL` in `.env.local` to the disposable database. After verifying
-the target, apply the existing migrations with `bun run db:migrate`, then start
-with `bun run dev`. Agents need explicit permission before running database
-commands. Open `http://localhost:3000`. Run the complete local gate with:
+Set `DATABASE_URL` to a disposable PostgreSQL database and public origins to the
+local application. After verifying the exact target and obtaining explicit
+migration authorization, run `bun run db:migrate`, then `bun run dev`.
+Optional provider credentials can remain empty. Keep secrets out of Git.
 
-```bash
-bun run ci
-```
+Scripts and dependencies are declared in `package.json`. Local checks are
+selected for the changed behavior. GitHub CI runs lint, types, all remaining
+unit tests, migrations and database integration against disposable PostgreSQL,
+the production build and the high-severity dependency audit. GitHub branch rules require
+separate account configuration.
 
-The remaining scripts are declared in [`package.json`](package.json). Database
-scripts can change schema or data; verify the target before running one.
+## Starter constraints
 
-Pull-request CI also starts an empty PostgreSQL service, applies every migration,
-and runs the database integration test.
+Protected example mutations reject requests until a project implements verified
+server-side authentication and resource authorization. Analytics consent defaults
+to denied. These are safe starting points, not finished product integrations.
 
-## Start a derived project
-
-Follow [template adoption in CONTRIBUTING.md](CONTRIBUTING.md#template-adoption)
-for branch and tracker setup, then use the
-[project adoption checklist](docs/guides/project-adoption-guide.md) to record the
-brief and replace demo behaviour. Keep product decisions in the derived
-repository. Configure GitHub branch protection separately; template files do
-not enable it.
-
-## Before the first deployment
-
-Before enabling protected mutations, replace the fail-closed action context
-with a verified server-side session. Review the project-specific security, consent, analytics, monitoring, and
-public-content decisions identified in the architecture review and the relevant
-guides below.
-
-## Documentation
-
-| Document | Owns |
-| --- | --- |
-| [`docs/architecture.md`](docs/architecture.md) | Module placement, dependency direction, and source conventions |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branch, commit, review, and contribution workflow |
-| [`AGENTS.md`](AGENTS.md) | Agent authorization and repository-specific operating rules |
-| [`docs/guides/quality-guide.md`](docs/guides/quality-guide.md) | Verification gates, lint/CI/hooks, exceptions and review evidence |
-| [`docs/guides/html-report-guide.md`](docs/guides/html-report-guide.md) | Standalone report layout, accessibility and verification |
-| [`docs/guides/testing-guide.md`](docs/guides/testing-guide.md) | Test selection and test-suite policy |
-| [`docs/guides/`](docs/guides) | Error handling, logging, analytics, Sentry, performance, and SEO |
-| [`docs/reports/nextjs-starter-architecture-review.html`](docs/reports/nextjs-starter-architecture-review.html) | Dated audit findings and recommendations |
-
-The HTML report is a point-in-time review, not an instruction manual. Current
-working rules live in the Markdown documents above.
+The project owns its approved business facts, Figma references, account choices,
+consent policy and local/preview/production configuration. Preserve necessary
+project decisions and operating knowledge where contributors can recover them;
+shared skills own the reusable process. Replace demo content and metadata before
+launch. Verify preview indexing and external recipients against the actual
+hosting environment, regardless of its build mode.

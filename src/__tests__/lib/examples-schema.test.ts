@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { EXAMPLE_LIMITS } from "@/lib/constants";
 import { createExampleSchema } from "@/lib/examples-schema";
 
 describe("createExampleSchema", function createExampleSchemaTests() {
@@ -10,7 +9,7 @@ describe("createExampleSchema", function createExampleSchemaTests() {
       name: "  Example  ",
     });
 
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       success: true,
       data: { name: "Example" },
     });
@@ -24,7 +23,7 @@ describe("createExampleSchema", function createExampleSchemaTests() {
 
   it("rejects names longer than the database column", function rejectsLongNames() {
     const result = createExampleSchema.safeParse({
-      name: "x".repeat(EXAMPLE_LIMITS.NAME_MAX_LENGTH + 1),
+      name: "x".repeat(257),
     });
 
     expect(result.success).toBe(false);

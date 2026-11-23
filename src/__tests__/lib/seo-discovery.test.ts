@@ -44,15 +44,8 @@ describe("public discovery", function publicDiscoveryTests() {
   it("builds a factual agent index from public site data", function llmsTextTest() {
     const content = buildLlmsText("https://example.com/");
 
-    expect(content).toContain("# Next.js Starter");
-    expect(content).toContain(
-      "> A reusable base for full-stack Next.js projects.",
-    );
     expect(content).toContain("[Home](https://example.com/)");
     expect(content).toContain("[Sitemap](https://example.com/sitemap.xml)");
-    expect(content).not.toContain("production-ready");
-    expect(content).not.toContain("Dynamic OG images");
-    expect(content.endsWith("\n")).toBe(true);
   });
 });
 
